@@ -1,0 +1,95 @@
+/* 时间线剪辑器（timeline.js）视图层样式。
+   作用域：全部规则限定 .tl-* 结构类与 .picker-item.missing 状态类，不写全局根主题/壳规则。
+   颜色一律使用 app.css 既有 token（--bg/--panel/--panel2/--text/--dim/--accent/--line/
+   --edge/--err/--warn/--port-*），黑白双主题自动生效；不使用 !important。
+   clip/strip 的 left/width/minWidth/background-size 等数据驱动尺寸仍由 timeline.js 内联写入。 */
+
+.tl-root { display: flex; flex-direction: column; gap: 10px; height: 100%; min-height: 0; }
+
+/* ===== 顶栏：标题 + 片段统计 ｜ 输出/缩放/历史/导出 ===== */
+.tl-toolbar { flex: none; display: flex; flex-direction: column; gap: 8px; }
+.tl-toolbar .spacer { flex: 1; }
+.tl-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-right: 30px; }
+.tl-head-l { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.tl-title { font-size: 15px; }
+.tl-count { font-size: 12px; color: var(--dim); white-space: nowrap; }
+.tl-count.warn { color: var(--warn); }
+.tl-head-r { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.tl-head-r select { width: auto; font-size: 12px; padding: 4px 8px; }
+.tl-sep { flex: none; width: 1px; height: 18px; background: var(--line); margin: 0 2px; }
+
+/* ===== 「添加到轨道」工具行：低频动作独立分区 ===== */
+.tl-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 10px; background: var(--panel2); border: 1px solid var(--line); border-radius: 14px; }
+.tl-tools-label { flex: none; font-size: 12px; color: var(--dim); }
+
+/* ===== 预览区：黑色舞台卡片 + 播放传输条 ===== */
+.tl-preview { flex: none; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; background: #000; }
+.tl-canvas-wrap { display: flex; align-items: center; justify-content: center; padding: 10px; min-height: 0; }
+.tl-canvas { display: block; width: auto; height: auto; max-width: 100%; max-height: min(30vh, 260px); border-radius: 12px; background: #000; }
+.tl-transport { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; background: var(--panel); border-top: 1px solid var(--line); }
+.tl-time { font-variant-numeric: tabular-nums; color: var(--dim); font-size: 12px; min-width: 110px; }
+.tl-scrub { flex: 1; min-width: 160px; }
+
+/* ===== 轨道区：刻度尺 + 五条轨，横/纵向自滚动 ===== */
+.tl-lanes { position: relative; flex: 1; min-height: 150px; overflow: auto; border: 1px solid var(--line); border-radius: 16px; padding: 10px; background: var(--panel); }
+.tl-lane { display: flex; align-items: stretch; gap: 6px; margin-bottom: 6px; min-height: 52px; }
+.tl-lane:last-child { margin-bottom: 0; }
+.tl-lane-label { width: 56px; flex: none; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--text); border-right: 1px solid var(--line); }
+.tl-ruler-row { display: flex; align-items: stretch; gap: 6px; margin-bottom: 8px; min-height: 24px; }
+.tl-ruler-corner { width: 56px; flex: none; display: flex; align-items: center; justify-content: center; border-right: 1px solid var(--line); color: var(--dim); }
+.tl-ruler-corner small { font-size: 10px; }
+.tl-strip { position: relative; flex: 1; height: 52px; border-radius: 10px; background: repeating-linear-gradient(90deg, var(--panel2) 0, var(--panel2) 1px, transparent 1px, transparent 100%); }
+.tl-ruler { position: relative; flex: 1; height: 24px; border-bottom: 1px solid var(--line); cursor: pointer; user-select: none; }
+.tl-tick { position: absolute; top: 0; bottom: 0; padding: 2px 0 0 4px; border-left: 1px solid var(--line); font-size: 10px; line-height: 1.4; color: var(--dim); white-space: nowrap; pointer-events: none; }
+
+/* ===== 片段块：按类型着色（token 低饱和混色，黑白主题一致） ===== */
+.tl-clip { position: absolute; top: 4px; bottom: 4px; background: var(--panel2); border: 1px solid var(--edge, #5a6373); border-radius: 10px; overflow: hidden; cursor: grab; user-select: none; box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 10%, transparent); }
+.tl-clip.sel { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 1px 2px color-mix(in srgb, var(--text) 10%, transparent); }
+.tl-clip.missing { border-color: var(--err); border-style: dashed; background: color-mix(in srgb, var(--err) 10%, var(--panel2)); }
+.tl-clip.k-video { background: color-mix(in srgb, var(--port-video) 16%, var(--panel2)); border-color: color-mix(in srgb, var(--port-video) 45%, var(--line)); }
+.tl-clip.k-image { background: color-mix(in srgb, var(--port-image) 16%, var(--panel2)); border-color: color-mix(in srgb, var(--port-image) 45%, var(--line)); }
+.tl-clip.k-audio { background: color-mix(in srgb, var(--port-audio) 14%, var(--panel2)); border-color: color-mix(in srgb, var(--port-audio) 45%, var(--line)); }
+.tl-clip.k-text { background: color-mix(in srgb, var(--warn) 12%, var(--panel2)); border-color: color-mix(in srgb, var(--warn) 40%, var(--line)); }
+.tl-clip.k-subtitle { background: color-mix(in srgb, var(--accent) 12%, var(--panel2)); border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+.tl-clip-name { display: block; font-size: 12px; padding: 3px 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+.tl-clip-edge { position: absolute; top: 0; bottom: 0; width: 8px; cursor: ew-resize; z-index: 2; }
+.tl-clip-edge.l { left: 0; }
+.tl-clip-edge.r { right: 0; }
+.tl-clip-edge:hover { background: var(--accent); opacity: .5; }
+.tl-playhead { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--err); pointer-events: none; }
+
+/* ===== 轨道空态：一条主引导（容器不拦截指针，卡片可点） ===== */
+.tl-empty { position: absolute; inset: 8px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.tl-empty-card { pointer-events: auto; display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 340px; padding: 20px 24px; text-align: center; background: var(--panel); border: 1px dashed var(--line); border-radius: 18px; }
+.tl-empty-card .hint { margin: 0; }
+
+/* ===== 片段检查器：分区标签 + 自滚动 ===== */
+.tl-inspector { flex: none; display: flex; flex-direction: column; gap: 10px; border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; background: var(--panel); max-height: 240px; overflow-y: auto; }
+.tl-inspector h3 { margin: 0; font-size: 14px; }
+.tl-ins-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.tl-ins-head .chip { margin-left: auto; cursor: default; }
+.tl-ins-empty { display: flex; flex-direction: column; gap: 4px; padding: 4px 2px; }
+.tl-ins-empty .hint { margin: 0; }
+.tl-sec { display: flex; flex-direction: column; gap: 8px; }
+.tl-sec-label { font-size: 11px; color: var(--dim); letter-spacing: .02em; border-left: 3px solid var(--accent); padding-left: 6px; }
+.tl-sec-body { display: flex; flex-direction: column; gap: 8px; }
+.tl-sec-body .field { margin-bottom: 0; }
+.tl-inspector .modal-actions { justify-content: flex-start; margin-top: 0; }
+.tl-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tl-grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+
+/* ===== 导出菜单 / 素材选择器 ===== */
+.tl-export { position: relative; }
+.tl-menu { position: absolute; right: 0; top: 110%; z-index: 20; display: flex; flex-direction: column; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 8px; min-width: 260px; box-shadow: var(--node-shadow); }
+.tl-menu button { text-align: left; }
+.picker-item.missing { opacity: .5; }
+
+/* ===== 分镜成片入轨预览（C3）：序号｜镜头｜素材｜双时长对照 ===== */
+.tl-shot-list { display: flex; flex-direction: column; gap: 4px; max-height: 300px; overflow-y: auto; margin: 8px 0; }
+.tl-shot-row { display: flex; align-items: baseline; gap: 8px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); font-size: 13px; }
+.tl-shot-no { flex: none; width: 20px; text-align: right; color: var(--dim); }
+.tl-shot-title { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-shot-asset { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-shot-dur { flex: none; }
+.tl-shot-conflicts { margin: 6px 0; display: flex; flex-direction: column; gap: 3px; }
+.tl-shot-conflicts p { margin: 0 0 2px; }

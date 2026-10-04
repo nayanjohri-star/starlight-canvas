@@ -1,0 +1,65 @@
+import { studioActionDeclaration } from "../studio-actions.js";
+import { fail } from "./shared.js";
+
+const input = (properties = {}, required = []) => ({ type: "object", properties, required, additionalProperties: false });
+const name = { type: "string", minLength: 1, maxLength: 240 };
+const token = { type: "string", minLength: 1, maxLength: 240 };
+const document = (id, label, properties = {}) => ({ id, label, description: label, kind: "document", exposure: "confirm", input: input(properties) });
+const rename = { id: "project.rename", label: "Rename project", description: "Rename the project in one retained undo entry.", kind: "mutation", undoDomain: "scenes", input: input({ name }, ["name"]) };
+const save = { ...studioActionDeclaration("project.save"), input: input({ name }) };
+const saveAs = { ...save, id: "project.saveAs", label: "Save project as" };
+const opening = document("project.open", "Open a project file", { serialized: { type: "string", maxLength: 400_000_000 }, handleToken: token, projectToken: token });
+const fresh = document("project.new", "Start a new project", { name });
+const starter = document("project.openStarter", "Open a starter project", { id: token, source: { type: "string", enum: ["starter", "tutorial", "launch"] } });
+const restore = { ...document("project.restore", "Restore the remembered project", { handleToken: token }), exposure: "ui-only" };
+const browse = { id: "project.browse", label: "Browse projects", description: "Show the project browser.", kind: "transient", exposure: "ui-only", input: input() };
+export const declarations = Object.freeze([rename, save, saveAs, opening, fresh, starter, restore, browse]);
+
+export function register(registry, ports) {
+	const owner = () => ports.storeDomain?.("scenes");
+	const available = () => Boolean(owner()) || "The project document owner is not mounted.";
+	registry.register({ ...rename, available, run: ({ name }) => {
+		if (!name.trim()) fail("INVALID_ARGUMENT", "A project name cannot be blank.");
+		owner().renameProject(name);
+		return { affectedIds: [owner().metadata().activeSceneId], summary: "Renamed project." };
+	} });
+	for (const declaration of [save, saveAs]) registry.register({ ...declaration, available: () => true,
+		requiresConfirmation: state => {
+			if (ports.projectPersistence && declaration.id === "project.save") return false;
+			const project = owner()?.fileState() ?? state.project;
+			return project.hasFile || project.fileAccess;
+		},
+		run: async (args, context) => {
+			if (ports.projectPersistence) {
+				context.check();
+				if (declaration.id === "project.saveAs") {
+					const copy = await ports.projectPersistence.exportCopy();
+					context.check();
+					return { affectedIds: [], output: copy, summary: "已发起工程副本下载；画布保存状态保持不变。" };
+				}
+				const record = await ports.projectPersistence.save(args);
+				context.check();
+				return { affectedIds: [], output: { revision: record.rev }, summary: `已保存到当前画布项目 · 修订 ${record.rev}` };
+			}
+			const project = owner()?.fileState() ?? ports.state().project;
+			const as = declaration.id === "project.saveAs";
+			if (context.origin !== "ui" && !project.gesture && project.name !== null && project.fileAccess) {
+				if (as || !project.hasFile) fail("TARGET_NOT_READY", "Only the user's click can open the file picker. Ask them to press Save Project.");
+				if (!(await ports.projectFileGranted())) fail("TARGET_NOT_READY", "The browser needs the user's click to re-grant access to the project file.");
+			}
+			const saved = owner() ? await owner().save({ ...args, saveAs: as }, context) : await ports.saveProject(as);
+			if (saved?.naming) fail("TARGET_NOT_READY", "Not saved: the project has no name yet. The Save dialog is open for the user.");
+			if (saved?.cancelled) fail("TARGET_NOT_READY", "Not saved: the user closed the file picker.");
+			if (!saved?.saved) fail("TARGET_NOT_READY", saved?.failure === "missing-resources" ? "Not saved: some project assets or motions are missing."
+				: saved?.failure === "resources-too-large" ? "Not saved: the project's resources are too large." : "Not saved: writing the project file failed.");
+			return { affectedIds: [], output: { fileName: saved.fileName }, summary: saved.downloaded
+				? `This browser has no file access, so the project ${saved.name} was downloaded as ${saved.fileName}.`
+				: `Saved the project ${saved.name} to ${saved.fileName}.` };
+		} });
+	for (const declaration of [opening, fresh, starter, restore, browse]) registry.register({ ...declaration,
+		available, run: async (args, context) => {
+			const result = await owner().projectAction(declaration.id, args, context);
+			if (result === false) fail("TARGET_NOT_READY", "The project was not opened; check the project dialog.");
+			return { affectedIds: [owner().metadata().activeSceneId], output: { opened: result === true }, summary: `${declaration.label}.` };
+		} });
+}

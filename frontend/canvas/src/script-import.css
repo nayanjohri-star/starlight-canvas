@@ -1,0 +1,49 @@
+/* 脚本文件导入（TXT/DOCX/JSON）——storyboard 导入弹窗的文件区与预览列表。
+   颜色走半透明层与 opacity，明暗主题通用；圆角与既有 .sb-* 卡片一致。 */
+
+.sbi-drop {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px dashed rgba(127, 137, 157, .45);
+  border-radius: 10px;
+}
+.sbi-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sbi-file { max-width: 280px; font-size: 12px; }
+.sbi-head select { font-size: 12px; }
+
+.sbi-preview {
+  margin-top: 8px;
+  max-height: 200px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sbi-preview:empty { display: none; }
+
+.sbi-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(127, 137, 157, .12);
+  font-size: 12px;
+}
+.sbi-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sbi-meta { opacity: .65; white-space: nowrap; }
+.sbi-error { color: #d64545; font-size: 12px; margin: 4px 0; }
+.sbi-confirm-list { margin: 6px 0 6px 18px; max-height: 160px; overflow: auto; }
+.sb-import { flex: 0 1 auto; }
+.sb-import .modal-actions { margin-top: 12px; }
+.sbi-paste { padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; }
+.sbi-paste summary { cursor: pointer; }
+.sbi-paste textarea { margin: 10px 0; width: 100%; min-height: 130px; }
+.sbi-excerpt p { white-space: pre-wrap; overflow-wrap: anywhere; margin: 4px 0 12px; }
+.sbi-preview { max-height: 320px; }

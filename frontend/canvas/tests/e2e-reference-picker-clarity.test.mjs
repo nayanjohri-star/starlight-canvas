@@ -1,0 +1,44 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { join } from 'node:path';
+import { chromium, CHROME, ROOT, SHOTS, createCanvasServer, makeState, mockUpstream, realPng, addAsset, setKey } from './e2e-helpers.mjs';
+
+test('reference picker separates canvas from history and previews without attaching or generating', { timeout: 40000 }, async t => {
+  const state = makeState();
+  const server = createCanvasServer({ staticDir: join(ROOT, 'dist'), directorDir: join(ROOT, '../../docs/minimax-video-ref/bundled-plugins/3d-director-stage'), upstreamFetch: mockUpstream(state) });
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const browser = await chromium.launch({ executablePath: CHROME, headless: true });
+  t.after(async () => { await browser.close(); server.closeAllConnections(); await new Promise(r => server.close(r)); });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  await page.goto(`http://127.0.0.1:${server.address().port}/`);
+  await page.waitForFunction(() => window.__xp?.store.project); await setKey(page);
+  const png = await realPng(page);
+  const current = await addAsset(page, png, '机甲参考.png', 'image', 40, 40);
+  const old = await page.evaluate(async bytes => {
+    const x = window.__xp;
+    const a = await x.assets.registerBlob(new Blob([new Uint8Array(bytes)], { type: 'image/png' }), '生成图-图片生成-musj7gn.png', 'image', { category: 'gen' });
+    const node = x.store.addNode('image', 440, 120, { prompt: '', title: '图片生成' });
+    x.board.select('node', node.id);
+    return { assetId: a.id, nodeId: node.id };
+  }, png);
+  await page.getByRole('button', { name: '+ 参考素材', exact: true }).click();
+  const menu = page.locator('.reference-menu:not([hidden])');
+  assert.equal(await menu.locator('[data-reference-asset]').count(), 1);
+  assert.equal(await menu.locator(`[data-reference-asset="${current.assetId}"]`).count(), 1);
+  await menu.getByRole('button', { name: '全部素材 (2)', exact: true }).click();
+  assert.equal(await menu.locator('[data-reference-asset]').count(), 2);
+  assert.match(await menu.locator(`[data-reference-asset="${old.assetId}"]`).innerText(), /生成素材 · 素材库/);
+  assert.ok((await menu.locator('.reference-thumb').first().boundingBox()).width >= 70);
+  await page.screenshot({ path: join(SHOTS, 'reference-picker-clarity.png') });
+  await menu.getByRole('button', { name: '预览 生成图-图片生成-musj7gn.png', exact: true }).click();
+  await page.locator('.media-preview-stage img').waitFor({ state: 'visible' });
+  assert.equal(await page.evaluate(() => window.__xp.store.project.edges.length), 0);
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: '+ 参考素材', exact: true }).click();
+  await menu.getByRole('button', { name: '全部素材 (2)', exact: true }).click();
+  await menu.locator(`[data-reference-asset="${old.assetId}"]`).click();
+  await page.waitForFunction(id => window.__xp.store.node(id).data.prompt.includes('@图片1'), old.nodeId);
+  assert.equal(await page.evaluate(id => window.__xp.store.node(id).data.bindings['image:1'], old.nodeId), old.assetId);
+  assert.equal(state.creates.length + state.uploads.length, 0);
+  assert.equal(await page.evaluate(() => Object.keys(window.__xp.store.project.assets).length), 2);
+});

@@ -1,0 +1,254 @@
+/* Node-local editing uses the same form and task controls as the side panel. */
+.composer-resizer-hidden { display: none; }
+.composer-pin { margin-left: auto; font-size: 11px; padding: 4px 9px; color: var(--dim); }
+.composer-pin[hidden] { display: none; }
+.prompt-reference-tools { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 8px; }
+.reference-hover { position: fixed; z-index: 110; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); box-shadow: 0 12px 40px #0008; pointer-events: none; }
+.reference-hover img { flex: 1; min-height: 0; width: 100%; object-fit: contain; }
+.reference-hover span { font-size: 11px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.reference-connected { width: 100%; display: flex; gap: 6px; flex-wrap: wrap; }
+.reference-connected[hidden] { display: none; }
+.reference-connected-item { display: flex; align-items: center; gap: 6px; padding: 4px 7px; border: 1px solid var(--line); border-radius: 8px; font-size: 11px; }
+.reference-connected-item img { width: 44px; height: 34px; object-fit: contain; }
+.reference-connected-pair { display: flex; align-items: center; gap: 3px; }
+.composer-resize-handle { position: fixed; z-index: 94; width: 24px; height: 24px; padding: 0; border: 0; color: var(--dim); background: var(--panel2); border-radius: 5px; cursor: nwse-resize; touch-action: none; }
+.composer-resize-handle[hidden], .inspector-clone[hidden] { display: none; }
+.inspector-clone { font-size: 11px; padding: 4px 8px; }
+.reference-trigger { border-radius: 999px; font-size: 12px; padding: 5px 10px; white-space: nowrap; }
+.prompt-reference-tools > .hint { font-size: 11px; }
+.reference-menu { position: fixed; z-index: 95; display: flex; flex-direction: column; box-sizing: border-box; padding: 10px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: 0 12px 40px #0005; }
+.reference-menu[data-placement=inline] { position: static; width: 100%; max-height: 440px; }
+.prompt-reference-tools:has(.reference-menu[data-placement=inline]:not([hidden])) { flex-wrap: wrap; }
+.reference-menu[hidden] { display: none; }
+.reference-menu input { width: 100%; min-width: 0; box-sizing: border-box; }
+.reference-kinds { display: flex; gap: 5px; margin: 8px 0; }
+.reference-kinds button { padding: 5px 10px; font-size: 12px; border-radius: 999px; }
+.reference-kinds button[aria-pressed=true] { color: var(--accent-ink); background: var(--accent); }
+.reference-kinds[hidden] { display: none; }
+.reference-kinds button[hidden] { display: none; }
+.reference-scopes { margin-bottom: 0; flex-wrap: wrap; }
+.reference-summary { margin: 6px 0; font-size: 11px; color: var(--dim); }
+.reference-options { min-height: 0; flex: 1; max-height: 350px; overflow: auto; overscroll-behavior: contain; }
+.reference-row { display: flex; align-items: center; gap: 4px; }
+.reference-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.reference-meta { color: var(--dim); font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
+.reference-preview { flex: 0 0 auto; font-size: 11px; padding: 6px; background: transparent; border: 1px solid var(--line); border-radius: 7px; }
+.reference-more { margin-top: 6px; flex-shrink: 0; }
+.reference-option { display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; text-align: left; padding: 7px; border-radius: 8px; background: transparent; border: 1px solid transparent; }
+.reference-option[aria-selected=true] { background: var(--panel2); border-color: var(--line); }
+.reference-thumb { width: 76px; height: 64px; display: grid; place-items: center; flex: 0 0 auto; background: var(--panel2); border-radius: 5px; font-size: 10px; color: var(--dim); overflow: hidden; }
+.reference-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.reference-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reference-feedback { color: var(--danger, #df7569); font-size: 12px; margin: 6px 0 0; }
+.reference-feedback:empty { display: none; }
+.generation-empty-preview { height: 100px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 6px; color: var(--dim); background: var(--panel2); border-radius: 12px; margin-bottom: 12px; font-size: 12px; }
+.preview-symbol { font-size: 32px; line-height: 1; opacity: .55; }
+
+/* ---- 图片生成面板：结果预览在固定取景框内等比完整显示，面板只纵向滚动 ---- */
+#inspector { overflow-x: hidden; }
+.image-generation-form, .image-generation-form > * { min-width: 0; }
+.image-generation-form :is(.hint, .err-text) { overflow-wrap: anywhere; }
+.image-result-preview { display: block; box-sizing: border-box; width: 100%; height: min(240px, 36vh); margin: 0 0 12px; padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--panel2); cursor: zoom-in; }
+.image-result-preview:hover:not(:disabled) { border-color: var(--line-strong); background: var(--panel2); }
+.image-result-preview img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.gen-run-line { display: flex; align-items: center; gap: 6px 8px; flex-wrap: wrap; min-width: 0; margin-bottom: 8px; font-size: 12px; }
+.gen-run-line[hidden] { display: none; }
+.gen-run-error { flex-basis: 100%; min-width: 0; overflow-wrap: anywhere; }
+.gen-run-status { display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
+
+/* ---- 分区标题（参考素材 / 提示词 / 任务）---- */
+.composer-section-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.composer-section-title { font-size: 12px; font-weight: 600; color: var(--text); }
+.composer-section-head .hint { font-size: 11px; }
+.prompt-count { margin-left: auto; font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.prompt-count.over { color: var(--err); }
+.composer-expand { font-size: 12px; padding: 3px 10px; border-radius: 999px; }
+.composer-expand .when-expanded, #inspector.composer-expanded .composer-expand .when-collapsed { display: none; }
+#inspector.composer-expanded .composer-expand .when-expanded { display: inline; }
+.composer-prompt textarea { min-height: 150px; resize: vertical; font-size: 14px; line-height: 1.6; }
+.composer-prompt .field { margin-bottom: 4px; }
+.composer-references .prompt-reference-tools { margin: 0 0 8px; }
+.ref-counts { margin-left: auto; }
+
+/* ---- 参考素材条：缩略图（点击插入 @ 引用）+ 移除 ---- */
+.ref-item { position: relative; min-width: 0; }
+.ref-item .ref-thumb { width: 100%; }
+.ref-remove { position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; padding: 0; font-size: 13px; line-height: 18px; border-radius: 999px; background: color-mix(in srgb, var(--panel) 85%, transparent); opacity: .85; }
+.ref-remove:hover:not(:disabled) { opacity: 1; color: var(--err); }
+
+/* ---- 首尾帧图片框 ---- */
+.frame-slots-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; font-size: 12px; }
+.frame-slots-head .hint { font-size: 11px; }
+.frame-slots-row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 8px; align-items: center; }
+.frame-slots[data-frames-intent=last_frame] .frame-slots-row { grid-template-columns: minmax(0, 260px); }
+.frame-slot-card { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 8px; border: 1px dashed var(--line-strong); border-radius: 12px; background: var(--panel); }
+.frame-slot-card.filled { border-style: solid; border-color: var(--line); }
+.frame-slot-card.drop-ok { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--panel)); }
+.frame-slot-label { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 600; }
+.frame-slot-req { font-size: 11px; font-weight: 400; color: var(--dim); }
+.frame-slot-req.required { color: var(--warn); }
+.frame-slot-preview, .frame-slot-empty { width: 100%; aspect-ratio: 16 / 9; display: grid; place-items: center; padding: 0; overflow: hidden; border: 0; border-radius: 8px; background: var(--panel2); }
+.frame-slot-preview { cursor: zoom-in; }
+.frame-slot-preview img { width: 100%; height: 100%; object-fit: contain; }
+.frame-slot-thumb-text { font-size: 11px; color: var(--dim); }
+.frame-slot-empty { font-size: 13px; color: var(--dim); }
+.frame-slot-empty:hover:not(:disabled) { color: var(--text); background: var(--panel3); }
+.frame-slot-name { min-width: 0; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.frame-slot-actions { display: flex; gap: 6px; }
+.frame-slot-actions button { flex: 1; }
+.frame-swap { width: 32px; height: 32px; padding: 0; border-radius: 999px; font-size: 15px; }
+.unused-inputs { margin-top: 8px; padding: 8px 10px; border: 1px solid color-mix(in srgb, var(--warn) 45%, var(--line)); border-radius: 10px; background: color-mix(in srgb, var(--warn) 9%, var(--panel)); font-size: 12px; }
+.unused-inputs-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.unused-inputs-list { margin: 6px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; }
+.unused-inputs-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.unused-inputs-list li span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dim); }
+.frame-picker-popup { width: min(380px, 92vw); max-width: none; padding: 10px; }
+.frame-picker-title { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+.frame-picker-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; max-height: 280px; overflow: auto; overscroll-behavior: contain; }
+.frame-picker-option { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 4px; border-radius: 8px; text-align: left; }
+.frame-picker-option[aria-selected=true] { border-color: var(--accent); }
+.frame-picker-thumb { width: 100%; aspect-ratio: 16 / 9; display: grid; place-items: center; overflow: hidden; border-radius: 6px; background: var(--panel2); font-size: 10px; color: var(--dim); }
+.frame-picker-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.frame-picker-name { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.frame-picker-upload { width: 100%; margin-top: 8px; }
+
+/* ---- 任务区与输入检查（两类信息分开展示）---- */
+.gen-task .task-details p { margin: 4px 0; }
+.gen-task .task-details progress { width: 100%; }
+.gen-task .task-actions { margin-top: 8px; }
+.task-elapsed { font-size: 12px; color: var(--dim); font-weight: 400; font-variant-numeric: tabular-nums; }
+.task-time-slot { margin-left: auto; }
+.input-check:empty { display: none; }
+.input-check .err-fixable { margin-top: 6px; }
+
+.asset-preview-frame { position: relative; }
+.asset-preview-image { display: block; width: 100%; padding: 0; border: 0; background: transparent; cursor: zoom-in; }
+.asset-preview-open { display: block; margin: 4px 0 7px auto; padding: 3px 8px; font-size: 11px; }
+.media-preview-dialog { width: min(1300px, 96vw); height: min(900px, 92vh); box-sizing: border-box; }
+.media-preview { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 12px; }
+.media-preview h3 { margin: 0; padding-right: 24px; overflow-wrap: anywhere; }
+.media-preview-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.media-preview-toolbar button { padding: 5px 10px; }
+.media-preview-zoom { min-width: 44px; text-align: center; }
+.media-preview-stage { flex: 1; min-height: 0; min-width: 0; overflow: auto; background: var(--bg); border-radius: 10px; overscroll-behavior: contain; padding: 12px; }
+.media-preview-stage :is(img,video) { display: block; max-width: none; max-height: none; margin: auto; object-fit: contain; }
+.media-preview-stage audio { width: 100%; }
+
+@media (max-width: 1100px) {
+  .composer-expand { display: none; }
+}
+
+@media (max-width: 900px) {
+  /* 抽屉形态：标题栏（含关闭）吸顶并与底部提交区同宽，正文在两者之间纵向滚动 */
+  #inspector .insp-head { position: sticky; top: -48px; z-index: 3; display: flex; align-items: center; gap: 8px; margin: 0 -12px 10px; padding: 8px 12px; background: var(--panel); border-bottom: 1px solid var(--line); }
+}
+
+@media (min-width: 1101px) {
+  /* Navigation stays above the floating editor when its dock overlaps a node. */
+  #sidebar, #sidebar-resizer, #rail, #sel-bar, #view-bar { z-index: 12; }
+  #inspector.node-composer { position: fixed; z-index: 9; box-sizing: border-box; margin: 0; border: 1px solid var(--line); border-radius: 18px; padding: 12px 16px; background: var(--panel); overflow: hidden auto; overscroll-behavior: contain; box-shadow: 0 16px 52px #0004; }
+  #workarea:has(#board.is-connecting) #inspector.node-composer { visibility: hidden; pointer-events: none; }
+  /* 内边距 12px 16px：标题栏与底部提交区同样贴满编辑器宽度 */
+  #inspector.node-composer .insp-head { margin: -12px -16px 8px; padding: 9px 16px 7px; border-radius: 18px 18px 0 0; }
+  .node-composer .generation-form { display: flex; flex-direction: column; gap: 12px; }
+  #inspector.node-composer .ins-group { padding: 0; margin: 0; border: 0; }
+  /* 参考素材：浅底卡片，与提示词、参数清楚分区 */
+  #inspector.node-composer .composer-references { padding: 10px 12px; border-radius: 14px; background: var(--panel2); }
+  .node-composer .composer-references .frame-slot-card { background: var(--panel); }
+  .node-composer :is(.frame-slot-preview, .frame-slot-empty) { aspect-ratio: auto; height: 104px; }
+  .node-composer .ref-thumbs { display: flex; gap: 8px; max-height: 96px; margin: 0; flex-wrap: wrap; overflow: auto; }
+  .node-composer .ref-item { width: 96px; }
+  .node-composer .ref-thumb { padding: 3px; border-radius: 9px; background: var(--panel); }
+  .node-composer .ref-thumb :is(img, video) { height: 52px; border-radius: 6px; }
+  .node-composer .composer-prompt textarea { min-height: 150px; padding: 10px 12px; border-radius: 12px; }
+  /* 参数：一行排开 */
+  #inspector.node-composer .composer-parameters { display: grid; grid-template-columns: 1.5fr 1fr 1.5fr; align-items: end; gap: 8px; padding-top: 2px; }
+  .node-composer .composer-parameters .field { margin: 0; min-width: 0; }
+  .node-composer .composer-parameters label { font-size: 10px; color: var(--dim); margin-bottom: 3px; }
+  .node-composer .composer-parameters select, .node-composer .composer-parameters input[type=number] { min-width: 0; width: 100%; font-size: 12px; height: 32px; padding: 4px; border-radius: 7px; }
+  .node-composer .composer-parameters .gen-param-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .node-composer .composer-parameters > .field:last-child:nth-child(4) { grid-column: 1 / -1; display: flex; gap: 12px; align-items: center; }
+  .node-composer .composer-parameters > .field:last-child:nth-child(4) label { margin: 0; }
+  #inspector.node-composer .gen-task { padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; }
+  /* 生成按钮始终可见：提交区吸附在编辑器底部 */
+  #inspector.node-composer .gen-cta { position: sticky; bottom: -12px; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 10px; margin: 0 -16px -12px; padding: 10px 16px 12px; border-top: 1px solid var(--line); background: var(--panel); box-shadow: 0 2px 0 var(--panel); }
+  .node-composer .gen-cta > .field { margin: 0; font-size: 12px; }
+  .node-composer .gen-cta > :not(.field):not(button.primary) { grid-column: 1 / -1; }
+  #inspector.node-composer .gen-cta > button.primary { width: auto; min-width: 132px; padding: 9px 20px; border-radius: 999px; }
+  #inspector.node-composer .gen-cta .cost { font-size: 15px; }
+  .node-composer .image-generation-form { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1.4fr); gap: 8px; }
+  /* 卡片本身已显示成片：编辑器里提示词在前，预览取景框收小 */
+  .node-composer .image-generation-form > .image-result-preview { margin: 0; height: 180px; }
+  .node-composer .image-generation-form > .composer-prompt { grid-column: 1 / -1; order: -1; }
+  .node-composer .image-generation-form > :not(.field):not(.composer-prompt) { grid-column: 1 / -1; }
+  .node-composer .image-generation-form > .field { min-width: 0; margin: 0; }
+  .node-composer .image-generation-form select { width: 100%; min-width: 0; font-size: 12px; }
+  .node-composer .image-generation-form > .field:has(input) { grid-column: 1 / -1; }
+  /* 展开编辑：画布上方居中的大编辑器，提示词区占满剩余高度 */
+  #inspector.composer-expanded { display: flex; flex-direction: column; box-shadow: 0 24px 80px #0006; }
+  #inspector.composer-expanded > div:not(.insp-head) { flex: 1; min-height: 0; }
+  #inspector.composer-expanded .generation-form { min-height: 100%; }
+  #inspector.composer-expanded .composer-prompt { flex: 1; display: flex; flex-direction: column; }
+  #inspector.composer-expanded .composer-prompt .field { flex: 1; display: flex; }
+  #inspector.composer-expanded .composer-prompt textarea { flex: 1; min-height: 260px; font-size: 15px; resize: none; }
+}
+
+/* 卡片预览区：平时保持原样（占位 100px、成片 16:9）；编辑中统一为固定高度，任务状态变化不改变卡片高度 */
+.node-body .gen-preview-box { margin-bottom: 10px; overflow: hidden; border-radius: var(--radius-media); }
+.node-body .gen-preview-box :is(.generation-empty-preview, video.preview) { margin: 0; }
+.node.composer-editing .node-body .gen-preview-box { background: var(--panel2); }
+.node.composer-editing .node-body .gen-preview-box :is(.generation-empty-preview, video.preview) { height: 100%; border-radius: 0; }
+/* 「保存到电脑」占位：只在编辑中占住位置（不可见），成片出现后原位换成真按钮 */
+.gen-result-download.reserved { display: none; }
+.node.composer-editing .gen-result-download.reserved { display: block; visibility: hidden; }
+/* 浮动编辑器打开时：卡片只保留标题、预览、端口与开关，摘要行（型号/参数/预估/状态）由编辑器展示 */
+.node.composer-editing .node-body > div > :is(.row, .task-details, .err-text, .muted, progress) { display: none; }
+.node.composer-editing .gen-output-footer { min-height: 0; padding-bottom: 12px; }
+/* 编辑中卡片预览区限高（占位与成片同高，视频在框内等比显示），为下方编辑器留出空间 */
+.node.composer-editing .node-body .gen-preview-box { aspect-ratio: auto; height: 120px; }
+.gen-card-status { display: none; }
+.node.composer-editing .gen-card-status { display: flex; align-items: center; gap: 8px; height: 24px; overflow: hidden; margin: 0 0 8px; font-size: 12px; }
+
+/* ---- AI 改写 ---- */
+.link-btn { padding: 2px 4px; border: 0; background: transparent; font-size: 12px; color: var(--dim); }
+.link-btn:hover:not(:disabled) { color: var(--text); background: transparent; }
+.link-btn:disabled { opacity: .45; }
+.rewrite-nav { display: inline-flex; gap: 2px; margin-left: auto; }
+.rewrite-form .rewrite-result { min-height: 160px; font-size: 14px; line-height: 1.65; resize: vertical; }
+.rewrite-form .rewrite-source-input { min-height: 64px; }
+.rewrite-en summary, .rewrite-injected summary { cursor: pointer; font-size: 12px; color: var(--dim); padding: 4px 0; }
+.rewrite-en pre, .rewrite-preview-text { white-space: pre-wrap; font-size: 12px; line-height: 1.6; color: var(--dim); margin: 4px 0 0; max-height: 220px; overflow: auto; }
+.rewrite-roles { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.rewrite-role { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; font-size: 12px; border-radius: 8px; border-color: transparent; background: var(--panel2); color: var(--dim); }
+.rewrite-role[aria-checked=true] { color: var(--text); border-color: var(--line-strong); background: var(--panel); }
+.rewrite-role-tag { font-size: 10.5px; color: var(--warn); }
+.rewrite-manage { margin-left: auto; padding: 3px 8px; font-size: 12px; border: 0; background: transparent; color: var(--dim); }
+.rewrite-injected textarea { margin-top: 6px; font-size: 12.5px; line-height: 1.6; }
+.warn-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--warn); margin: 6px 0 0; }
+.warn-line::before { content: '⚠'; }
+.composer-rewrite { padding: 3px 10px; font-size: 12px; border-radius: 999px; }
+button.busy::after { content: '…'; display: inline-block; width: 1.2em; text-align: left; animation: xp-dots 1s steps(4) infinite; overflow: hidden; vertical-align: bottom; }
+@keyframes xp-dots { from { width: 0; } to { width: 1.2em; } }
+@media (prefers-reduced-motion: reduce) { button.busy::after { animation: none; } }
+#inspector.node-composer .rewrite-params { grid-template-columns: 1.6fr 1fr 1fr; }
+/* 管理角色 */
+.role-manager { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.role-manager-head { display: flex; align-items: center; gap: 10px; }
+.role-manager-head h3 { margin: 0; }
+.role-manager-head .hint { margin-right: auto; }
+.role-manager-body { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 16px; min-height: 0; }
+.role-list { display: flex; flex-direction: column; gap: 2px; max-height: 60vh; overflow: auto; }
+.role-list-head { font-size: 11.5px; color: var(--dim); margin: 8px 0 2px; }
+.role-item { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; padding: 6px 8px; border: 0; border-radius: 8px; background: transparent; font-size: 13px; }
+.role-item[aria-selected=true] { background: var(--panel2); }
+.role-item-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.role-add { margin-top: 8px; padding: 6px 8px; border: 0; background: transparent; text-align: left; font-size: 13px; }
+.role-form .role-prompt { min-height: 240px; font-size: 12.5px; line-height: 1.6; }
+.role-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.role-actions .danger { margin-left: auto; }
+.h3-rewrite { display: flex; flex-direction: column; gap: 10px; }
+.h3-rewrite h3 { margin: 0; }
+.rewrite-source { background: var(--panel2); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; line-height: 1.6; color: var(--dim); max-height: 120px; overflow: auto; white-space: pre-wrap; }
+.h3-rewrite .rewrite-result { min-height: 140px; }
+.rewrite-model { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rewrite-model label { margin: 0; }

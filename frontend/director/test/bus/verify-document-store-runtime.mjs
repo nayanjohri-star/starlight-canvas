@@ -1,0 +1,56 @@
+import assert from 'node:assert/strict';
+import { Object3D, Quaternion, Vector3 } from 'three';
+import { createRigRuntimeAdapter } from '../../src/store/runtime-adapters.js';
+import { documentFixture } from './document-store-fixture.mjs';
+
+const root = new Object3D(), hand = new Object3D(), world = new Object3D(), prop = new Object3D();
+root.add(hand); world.add(root, prop);
+const keys = new Map(), tracked = new Set();
+let rig = { root, bones: new Map([['rightHand', hand]]), ikState: { keys, tracked } };
+const { store, bus, run, register } = documentFixture({ owned: { motion: { characters: { actor: { ikKeys: {}, pose: {}, attachments: {} } } } } });
+const runtime = createRigRuntimeAdapter({ store, domain: 'motion', characterId: 'actor', resolveRig: () => rig, resolveObject: () => prop });
+const input = { hips: { p: { x: 1, y: 2, z: 3 }, q: [{ x: 0, y: 0, z: 0, w: 1 }], basePos: { x: 0, y: 1, z: 0 }, keepTranslations: true } };
+register('motion.key', 'motion', ({ value }) => { runtime.setIkKey(value, input); });
+register('motion.pose', 'motion', ({ value }) => {
+  runtime.setPose({ rightHand: { p: { x: value, y: 0, z: 0 }, q: { x: 0, y: 0, z: 0, w: 1 } } });
+  runtime.setAttachments({ cup: { bone: 'rightHand', p: { x: 0, y: 1, z: 0 } } });
+});
+try {
+  const first = run('motion.key', { value: 4 });
+  assert.equal(first.ok, true, JSON.stringify(first));
+  const intent = store.read('motion').characters.actor;
+  assert.deepEqual(intent.ikKeys['4'], input);
+  assert.equal(rig.ikState.keys, keys, 'the runtime Map identity stays live');
+  assert.ok(keys.get(4) instanceof Map);
+  assert.ok(keys.get(4).get('hips').p instanceof Vector3);
+  assert.ok(keys.get(4).get('hips').q[0] instanceof Quaternion);
+  assert.deepEqual([...tracked], ['hips']);
+  keys.get(4).get('hips').p.x = 500;
+  input.hips.p.x = 900;
+  assert.equal(intent.ikKeys['4'].hips.p.x, 1, 'caller and runtime mutation cannot rewrite intent/history');
+  assert.equal(run('edit.undo', { receiptId: first.receiptId }).status, 'undone');
+  assert.equal(keys.size, 0);
+  store.redo();
+  assert.equal(keys.get(4).get('hips').p.x, 1);
+  const tx = run('run.begin', { id: 'motion.key', args: { value: 8 } });
+  run('run.update', { txId: tx.txId, args: { value: 8 } });
+  assert.equal(keys.has(8), true);
+  run('run.cancel', { txId: tx.txId });
+  assert.equal(keys.has(8), false);
+  const pose = run('motion.pose', { value: 3 });
+  assert.equal(pose.ok, true, JSON.stringify(pose));
+  assert.equal(hand.position.x, 3);
+  assert.equal(prop.parent, hand);
+  assert.equal(prop.position.y, 1);
+  assert.equal(run('edit.undo', { receiptId: pose.receiptId }).status, 'undone');
+  assert.equal(hand.position.x, 0);
+  assert.equal(prop.parent, world);
+  assert.equal(prop.position.y, 0);
+  rig = { root: new Object3D(), bones: new Map(), ikState: { keys: new Map(), tracked: new Set() } };
+  runtime.sync();
+  assert.equal(rig.ikState.keys.get(4).get('hips').p.x, 1, 'a reloaded rig is rehydrated from intent');
+  runtime.dispose();
+  store.recordAction('motion', () => store.write('motion', { characters: { actor: { ikKeys: {}, pose: {}, attachments: {} } } }));
+  assert.equal(rig.ikState.keys.size, 1, 'disposal releases the store subscription');
+} finally { runtime.dispose(); bus.dispose(); store.dispose(); }
+console.log('PASS document store 7: detached authored IK intent drives runtime Maps, pose, attachments and history restoration');

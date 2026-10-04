@@ -1,0 +1,12 @@
+# 构建产物
+dist/
+# 本任务测试产物
+tests/shots/
+tests/e2e.log
+tests/out/
+scripts/dbg-*.mjs
+scripts/_rewrite-e2e.cjs
+# 发布门禁证据（报告、日志、校验值）为外部产物，不进源码
+.release-evidence/
+release-packages/
+dist-hosted/

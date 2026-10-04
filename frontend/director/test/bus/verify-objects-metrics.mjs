@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const baseline = JSON.parse(readFileSync(new URL('./baseline.json', import.meta.url)));
+const owned = ['hierarchy-panel.jsx', 'object-gizmo.jsx', 'panels/ObjectTransformPanel.jsx', 'panels/PropsPanel.jsx'];
+assert.deepEqual(Object.keys(baseline.writers).filter(key => key.startsWith('domains/objects.js::') || key.startsWith('panels/ObjectTransformPanel.jsx::')), []);
+const sites = owned.reduce((total, path) => total + [...readFileSync(new URL(`../../src/${path}`, import.meta.url), 'utf8').matchAll(/on[A-Z][A-Za-z]+[\s\S]{0,240}?\brun\s*\(/g)].length, 0);
+assert.ok(sites >= 20, `actual owned JSX handler sites: ${sites}; before: 0`);
+const { coverageMetrics } = await import('./verify-parity-matrix.mjs');
+const measured = coverageMetrics();
+assert.ok(measured.writerReferences <= 207, 'remove the seven owned objects/Inspector references from the 214-reference base');
+assert.equal(baseline.coverage.writerReferences, measured.writerReferences);
+assert.ok(measured.handlerSites >= baseline.coverage.handlerSites, 'other owned domains may add handler sites above the committed floor');
+console.log(`PASS objects metric movement: owned JSX handler sites 0 -> ${sites}; global writer references 214 -> ${measured.writerReferences}`);

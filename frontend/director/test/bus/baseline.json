@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "coverage": {
+    "writerReferences": 0,
+    "handlerSites": 62,
+    "handlerTotal": 62,
+    "registeredCommands": 87
+  },
+  "writers": {}
+}

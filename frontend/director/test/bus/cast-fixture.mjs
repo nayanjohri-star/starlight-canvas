@@ -1,0 +1,53 @@
+import { readFileSync } from 'node:fs';
+import { parseSync } from 'rolldown/experimental';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { createServer } from 'vite';
+import { appFixture } from './app-fixture.mjs';
+import { createStudioAppActions } from '../../src/commands/index.js';
+
+// Keep the shipped constants and cast hook; exclude only renderer components
+// imported by app-stage, which cannot mount in this Node integration fixture.
+const source = readFileSync(new URL('../../src/app-stage.jsx', import.meta.url), 'utf8');
+const names = new Set(['DEFAULT_SUBJECT', 'DEFAULT_SUBJECT2', 'nextCharacterId', 'DEFAULT_PROMPT_CLIPS',
+  'MAX_WAYPOINTS', 'MULTIMODEL_REASONS', 'ARDY_PROMPT_HORIZON_FRAMES', 'ARDY_DURATION_MIN', 'TIMELINE_FPS']);
+const constants = parseSync('stage.jsx', source).program.body.filter(node => node.type === 'ExportNamedDeclaration' &&
+  names.has(node.declaration?.id?.name ?? node.declaration?.declarations?.[0]?.id?.name)).map(node => source.slice(node.start, node.end)).join('\n');
+const server = await createServer({ configFile: false, server: { middlewareMode: true, hmr: false },
+  optimizeDeps: { noDiscovery: true, include: [] }, appType: 'custom', plugins: [{ name: 'cast-without-renderer', enforce: 'pre', load(id) {
+    if (id.endsWith('/src/app-stage.jsx')) return `import { DEFAULT_SUBJECT_ONE, DEFAULT_SUBJECT_TWO } from './scenes.js';\n${constants}`;
+  } }] });
+let useCast;
+try { ({ useCast } = await server.ssrLoadModule('/src/domains/cast.js')); }
+finally { await server.close(); }
+
+export function castFixture(f = appFixture()) {
+  const scope = f.scope, app = scope.appContext;
+  Object.assign(scope, { startupStage: { characters: f.characterRef.current, hasCharSheet: false }, startupShotState: {},
+    rigReportersRef: { current: new Map() }, rigWaitersRef: { current: new Map() }, promptTextSessionRef: { current: null },
+    setArdyDuration() {}, setArdyPrompt() {}, setActiveWaypointId() {}, setPendingWaypointFrame() {},
+    setSelectedPromptId() {}, setWaypointMode() {}, setPosing() {}, setPosingClosing() {},
+    clearMotion() { throw new Error('motion clearing must be supplied by the native-motion integration case'); },
+  });
+  let cast;
+  function renderCast() {
+    function Mount() { cast = useCast(app); return null; }
+    renderToStaticMarkup(createElement(Mount));
+    scope.castDomain = cast;
+    Object.assign(scope, cast);
+    return cast;
+  }
+  renderCast();
+  Object.assign(f.actionHandlers.current, app.actionPorts);
+  const registry = createStudioAppActions(f.actionHandlers.current);
+  scope.studioActionsRef.current = registry;
+  f.ports.actions = () => registry;
+  app.updatePorts({ read: f.actual.readStudioState, bounds: f.actual.studioBounds, revision: f.revision,
+    poses: () => f.poses, actions: () => registry, recordAction: f.actual.recordStudioAction, beginAction: f.actual.beginStudioAction });
+  Object.assign(f.ports, app.ports);
+  const run = (id, args = {}, origin = 'ui', options = {}) => f.binding.bus.run(id, args, {
+    origin, host: f.host(), expectedRevision: f.binding.refresh().revision, ...options,
+  });
+  const snapshot = () => structuredClone(app.storeDomain('cast').documentStore.getSnapshot().slices);
+  return { ...f, cast, registry, run, snapshot, renderCast, dispose() { f.dispose(); cast.dispose?.(); } };
+}

@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import { createStudioAppActions, COMMAND_MODULES } from '../../src/commands/index.js';
+import { studioActionDeclaration } from '../../src/studio-actions.js';
+import * as scene from './declaration-fixture.mjs';
+const modules = { ...COMMAND_MODULES, scene };
+const state = { scenes: [{ id: 'scene', name: 'Before' }], activeSceneId: 'scene' };
+const registry = createStudioAppActions({ state: () => ({ ...state }), renameSceneDocument: (id, name) => { state.scenes = [{ id, name }]; } }, modules);
+const effective = registry.prepare('scene.rename', { sceneId: 'scene', name: 'After' }).entry;
+assert.equal(effective.kind, 'mutation', 'module kind overrides the shared document declaration');
+assert.equal(effective.undoDomain, 'scenes');
+assert.equal(effective.description, scene.declarations.find(entry => entry.id === 'scene.rename').description);
+assert.equal(studioActionDeclaration('scene.rename').kind, 'document', 'shared defaults are not mutated');
+assert.equal(registry.get('scene.create').kind, 'document');
+assert.equal(registry.get('scene.duplicate').kind, 'document');
+assert.deepEqual((await registry.run('scene.rename', { sceneId: 'scene', name: 'After' })).affectedIds, ['scene']);
+const { verifyDeclarations } = await import('./verify-command-declarations.mjs');
+verifyDeclarations(modules, registry);
+console.log('PASS #480.3e module-owned effective declarations and declaration validator');

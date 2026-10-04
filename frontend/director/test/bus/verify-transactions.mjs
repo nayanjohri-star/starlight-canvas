@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict';
+import { fixture, result, deferred } from './fixture.mjs';
+const f = fixture();
+// The history owner retains a pre-image; the bus must use its session rather
+// than calling recordAction (which would push on every update).
+let committed = 0, cancelled = 0, timer;
+f.ports.beginAction = () => {
+  const before = f.state.value;
+  return { run: fn => fn(), commit: () => { committed++; return { historyEntryId: 'history-tx' }; }, cancel: () => { cancelled++; f.edit(before); } };
+};
+f.ports.setTimeout = fn => { timer = fn; return 1; };
+f.ports.clearTimeout = () => {};
+f.register('shot.reorder', args => { f.edit(args.startFrame); return result(); });
+const run = (id, args) => f.bus.run(id, args, f.request());
+const begin = await run('run.begin', { id: 'shot.reorder', args: { shotId: 'target', startFrame: 0 } });
+assert.equal(begin.ok, true, JSON.stringify(begin));
+assert.equal(typeof begin.txId, 'string');
+await run('run.update', { txId: begin.txId, args: { shotId: 'target', startFrame: 4 } });
+assert.equal(f.state.value, 4, 'updates publish previews');
+await run('run.update', { txId: begin.txId, args: { shotId: 'target', startFrame: 8 } });
+assert.equal(committed, 0, 'updates create no undo entry');
+const commit = await run('run.commit', { txId: begin.txId });
+assert.equal(commit.ok, true, JSON.stringify(commit));
+assert.equal(commit.undo.historyEntryId, 'history-tx');
+assert.equal(committed, 1);
+assert.deepEqual(commit.affectedIds, ['target']);
+assert.equal((await run('run.commit', { txId: begin.txId })).code, 'STALE_TARGET');
+const next = await run('run.begin', { id: 'shot.reorder', args: { shotId: 'target', startFrame: 8 } });
+await run('run.update', { txId: next.txId, args: { shotId: 'target', startFrame: 12 } });
+await run('run.cancel', { txId: next.txId });
+assert.equal(f.state.value, 8);
+assert.equal(cancelled, 1);
+const expiring = await run('run.begin', { id: 'shot.reorder', args: { shotId: 'target', startFrame: 8 } });
+await run('run.update', { txId: expiring.txId, args: { shotId: 'target', startFrame: 16 } });
+const expired = deferred();
+f.bus.subscribe(event => { if (event.type === 'transaction.cancelled') expired.resolve(event); });
+timer();
+assert.equal((await expired.promise).txId, expiring.txId);
+assert.equal(f.state.value, 8);
+assert.equal(cancelled, 2);
+console.log('PASS bus acceptance 4: wire previews, one commit, pre-image cancellation and idle expiry');

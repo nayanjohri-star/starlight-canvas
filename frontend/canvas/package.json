@@ -1,0 +1,32 @@
+{
+  "name": "xingpan-canvas",
+  "version": "0.5.0",
+  "private": true,
+  "type": "module",
+  "description": "星光智能画布：分镜、素材、生成工作流、3D 导演台与剪辑",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "node server/main.mjs",
+    "test": "node scripts/run-tests.mjs unit",
+    "test:unit": "node scripts/run-tests.mjs unit",
+    "test:contract": "node scripts/run-tests.mjs contract",
+    "test:accept": "node scripts/run-tests.mjs accept",
+    "test:e2e": "node scripts/run-tests.mjs e2e",
+    "test:recovery": "node scripts/run-tests.mjs recovery",
+    "test:performance": "node scripts/run-tests.mjs performance",
+    "test:package": "node scripts/run-tests.mjs package",
+    "test:director": "node scripts/run-tests.mjs director",
+    "test:director-native": "node scripts/run-tests.mjs director-native",
+    "test:env": "node scripts/env-check.mjs",
+    "verify:release": "node scripts/verify-release.mjs",
+    "verify:release:strict": "node scripts/release-gate.mjs",
+    "package:open-source": "node scripts/package-open-source.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "1.62.0"
+  },
+  "license": "AGPL-3.0-or-later"
+}

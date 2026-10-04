@@ -1,0 +1,23 @@
+name: Canvas community checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            frontend/canvas/package-lock.json
+            frontend/director/package-lock.json
+      - run: npm run setup
+      - run: npm run build
+      - run: npm test --prefix frontend/canvas -- --no-build
+      - run: npx playwright-core install --with-deps chromium
+        working-directory: frontend/canvas
+      - run: node --test --test-concurrency=2 tests/e2e-external-api.test.mjs tests/e2e-reference-workflow.test.mjs tests/e2e-reference-audit.test.mjs tests/e2e-image-panel.test.mjs tests/e2e-node-composer.test.mjs
+        working-directory: frontend/canvas

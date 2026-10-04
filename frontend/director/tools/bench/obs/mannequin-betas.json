@@ -1,0 +1,124 @@
+{
+  "schema": "obs.mannequin-betas.v1",
+  "method": {
+    "model": "smpl-x supermotion neutral",
+    "optimizer": "projected Adam warm start + bounded SLSQP minimax",
+    "adam_steps": 5000,
+    "adam_lr": 0.005,
+    "minimax_steps": 1500,
+    "minimax_starts": 3,
+    "minimax_success": true,
+    "minimax_status": 0,
+    "beta_limit": 3.0,
+    "smooth_max_weight": 0.0,
+    "smooth_max_temperature": 0.002,
+    "l2_prior": 1e-05,
+    "device": "cpu",
+    "source": "rendered rig rest pose (public/models/y-bot-tpose.fbx), segments: thigh_left, thigh_right, shin_left, shin_right, foot_left, foot_right, pelvis_width, spine_length, upper_arm_left, upper_arm_right, forearm_left, forearm_right, shoulder_width"
+  },
+  "betas": [
+    0.9879521131515503,
+    -0.43811583518981934,
+    0.23403924703598022,
+    1.1289187669754028,
+    0.4586992859840393,
+    -0.2744547724723816,
+    -2.9971723556518555,
+    -3.0,
+    2.999577045440674,
+    2.7470200061798096
+  ],
+  "target_geometry": {
+    "ybot_leg_height_m": 0.9650828829792554,
+    "canonical_cskel27_leg_height_m": 0.9544128,
+    "playback_scale": 1.0111797358326036,
+    "rest_contract": "public/ardy/cskel27-rest.json"
+  },
+  "residuals": {
+    "thigh_left": {
+      "target_m": 0.4059943638074366,
+      "fitted_m": 0.39750587940216064,
+      "residual_m": -0.008488484405275942,
+      "abs_residual_m": 0.008488484405275942
+    },
+    "thigh_right": {
+      "target_m": 0.4059943859177966,
+      "fitted_m": 0.4050813913345337,
+      "residual_m": -0.0009129945832628827,
+      "abs_residual_m": 0.0009129945832628827
+    },
+    "shin_left": {
+      "target_m": 0.42099025912196575,
+      "fitted_m": 0.4308183193206787,
+      "residual_m": 0.009828060198712962,
+      "abs_residual_m": 0.009828060198712962
+    },
+    "shin_right": {
+      "target_m": 0.42099023874729363,
+      "fitted_m": 0.43444767594337463,
+      "residual_m": 0.013457437196081001,
+      "abs_residual_m": 0.013457437196081001
+    },
+    "foot_left": {
+      "target_m": 0.15721559146548023,
+      "fitted_m": 0.14614197611808777,
+      "residual_m": -0.011073615347392457,
+      "abs_residual_m": 0.011073615347392457
+    },
+    "foot_right": {
+      "target_m": 0.15721558809599626,
+      "fitted_m": 0.14439848065376282,
+      "residual_m": -0.012817107442233439,
+      "abs_residual_m": 0.012817107442233439
+    },
+    "pelvis_width": {
+      "target_m": 0.18248906135565482,
+      "fitted_m": 0.15615954995155334,
+      "residual_m": -0.026329511404101474,
+      "abs_residual_m": 0.026329511404101474
+    },
+    "spine_length": {
+      "target_m": 0.3518987587650434,
+      "fitted_m": 0.3289218842983246,
+      "residual_m": -0.02297687446671881,
+      "abs_residual_m": 0.02297687446671881
+    },
+    "upper_arm_left": {
+      "target_m": 0.20827565969956363,
+      "fitted_m": 0.23210719227790833,
+      "residual_m": 0.023831532578344694,
+      "abs_residual_m": 0.023831532578344694
+    },
+    "upper_arm_right": {
+      "target_m": 0.2082745012754011,
+      "fitted_m": 0.2391563355922699,
+      "residual_m": 0.030881834316868806,
+      "abs_residual_m": 0.030881834316868806
+    },
+    "forearm_left": {
+      "target_m": 0.27614463806176104,
+      "fitted_m": 0.2709249258041382,
+      "residual_m": -0.005219712257622855,
+      "abs_residual_m": 0.005219712257622855
+    },
+    "forearm_right": {
+      "target_m": 0.2761446380616249,
+      "fitted_m": 0.26336047053337097,
+      "residual_m": -0.012784167528253954,
+      "abs_residual_m": 0.012784167528253954
+    },
+    "shoulder_width": {
+      "target_m": 0.3752159881593781,
+      "fitted_m": 0.34457817673683167,
+      "residual_m": -0.030637811422546457,
+      "abs_residual_m": 0.030637811422546457
+    }
+  },
+  "summary": {
+    "segment_count": 13,
+    "max_abs_beta": 3.0,
+    "max_abs_residual_m": 0.030881834316868806,
+    "rms_residual_m": 0.018625148220087758,
+    "max_bone_length_residual_m": 0.030881834316868806
+  }
+}
