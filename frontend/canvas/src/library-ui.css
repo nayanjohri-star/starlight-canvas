@@ -1,0 +1,73 @@
+/* 素材库（library.js）桌面视图层样式：黑/白主题随 app.css token 适配。
+   作用域收敛于 .lib / .lib-* / .lib-edit-* / .lib-preview / .lib-ref-list，
+   不写 :root、不写全局元素选择器、不使用 !important。 */
+
+/* 头部：标题 + 数量 + 主行动 */
+.lib-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-right: 30px; }
+.lib-titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lib-title { margin: 0; font-size: 16px; font-weight: 700; }
+.lib-count { font-size: 12px; color: var(--dim); }
+.lib-head-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+
+/* 工具行：搜索区与筛选区分组，整条衬底与网格区分 */
+.lib-bar { padding: 10px 12px; background: var(--panel2); border: 1px solid var(--line); border-radius: 14px; }
+.lib-bar-group { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.lib-bar-search { flex: 1 1 240px; }
+.lib-search { width: 100%; font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px; }
+.lib-search:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.lib-bar select { flex: none; width: auto; max-width: 170px; }
+.lib-fav-toggle[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+
+/* 合集侧栏：分区标题 + 清晰选中态，低频动作悬停/聚焦显现 */
+.lib-side-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 2px 6px; }
+.lib-side-title { font-size: 12px; font-weight: 600; color: var(--dim); }
+.lib-col { min-width: 0; border-radius: 10px; }
+.lib-col-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.lib-col-acts { display: flex; align-items: center; gap: 4px; flex: none; opacity: .5; }
+.lib-col:hover .lib-col-acts,
+.lib-col.on .lib-col-acts,
+.lib-col-acts:focus-within { opacity: 1; }
+.lib-col.on { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+
+/* 卡片网格：缩略图统一 16:10，留白一致，动作按钮三列成组 */
+.lib-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; padding: 6px 2px; }
+.lib-card { padding: 12px; gap: 8px; border-radius: 18px; box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 7%, transparent); transition: border-color .15s ease; }
+.lib-card:hover { border-color: var(--dim); }
+.lib-pv { height: auto; aspect-ratio: 16 / 10; border-radius: 14px; overflow: hidden; background: var(--panel2); }
+.lib-card .lib-name { display: block; font-size: 14px; }
+.lib-card .lib-meta { display: block; margin-top: -2px; }
+.lib-flags { flex-wrap: nowrap; }
+.lib-flags .lib-fav { flex: none; }
+.lib-flags select { flex: 1; min-width: 0; }
+.lib-tags { min-height: 24px; align-content: flex-start; }
+.lib-tags .chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.lib-acts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.lib-acts button { width: 100%; padding: 5px 6px; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lib-acts .lib-act-main { border-color: var(--accent); color: var(--accent); }
+
+/* 空态：单一主引导 */
+.lib-empty { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 48px 24px; text-align: center; border: 1px dashed var(--line); border-radius: 20px; }
+.lib-empty-title { margin: 0; font-size: 14px; font-weight: 600; color: var(--text); }
+.lib-empty .hint { margin: 0; max-width: 340px; }
+.lib-empty button { margin-top: 4px; }
+
+/* 预览弹窗：深色媒体舞台，尺寸约束统一（替代原内联 style） */
+.lib-preview-media { display: flex; align-items: center; justify-content: center; background: #000; border-radius: 18px; padding: 12px; }
+.lib-preview-media img,
+.lib-preview-media video { display: block; max-width: 100%; max-height: 70vh; border-radius: 10px; }
+.lib-preview-media audio { width: 100%; }
+
+/* 图片编辑器：裁切 / 变换 / 文字图层分区 */
+.lib-editor { display: flex; flex-direction: column; gap: 10px; }
+.lib-edit-stage { padding: 10px; }
+.lib-edit-stage canvas { display: block; max-width: 100%; max-height: 55vh; border-radius: 12px; }
+.lib-edit-sec { border-top: 1px solid var(--line); padding-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.lib-edit-sec-title { font-size: 12px; font-weight: 600; color: var(--dim); }
+.lib-editor input.lib-crop-num { width: 76px; flex: none; }
+.lib-text-add input[type="text"] { flex: 1 1 160px; width: auto; }
+.lib-text-add input[type="number"] { width: 64px; flex: none; }
+.lib-text-add input[type="color"] { width: 42px; padding: 2px; flex: none; }
+.lib-text-list { display: flex; flex-direction: column; gap: 4px; max-height: 140px; overflow-y: auto; }
+
+/* 删除确认中的引用清单：长名不撑破弹窗 */
+.lib-ref-list { max-height: 30vh; overflow: auto; margin: 8px 0; font-size: 11px; white-space: pre-wrap; word-break: break-all; }

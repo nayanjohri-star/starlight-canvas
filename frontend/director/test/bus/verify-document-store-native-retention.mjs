@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import { createDocumentStore } from '../../src/document-store.js';
+import { HISTORY_LIMIT } from '../../src/history.js';
+
+const store = createDocumentStore({ owned: { objects: [] } });
+const edit = value => store.recordAction('objects', () => store.write('objects', [{ id: 'cube', x: value }])).historyEntryId;
+const abandoned = edit(1);
+assert.equal(store.isRetained(abandoned), true);
+store.undo();
+assert.equal(store.isRetained(abandoned), true, 'redo retains both images');
+const first = edit(2);
+assert.equal(store.isRetained(abandoned), false, 'a surviving pre-image does not retain a discarded redo transition');
+for (let index = 2; index <= HISTORY_LIMIT; index++) edit(index + 1);
+assert.equal(store.isRetained(first), true);
+const last = edit(52);
+assert.equal(store.isRetained(first), false, 'the cap expires exactly at entry 51');
+assert.equal(store.canUndo(last), true);
+store.undo();
+assert.equal(store.canRedo(), true);
+assert.equal(store.history().future[0].historyEntryId, last);
+store.redo();
+assert.equal(store.read('objects')[0].x, 52);
+store.dispose();
+console.log('PASS document object retention: discarded redo identities expire and both images bound retention');

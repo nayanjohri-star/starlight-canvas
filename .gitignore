@@ -1,0 +1,15 @@
+**/node_modules/
+**/dist/
+**/dist-hosted/
+**/.vite/
+**/.release-evidence/
+**/release-packages/
+**/test-results/
+**/shots/
+**/playwright-report/
+.env
+.env.*
+*.pem
+*.key
+outputs/
+logs/

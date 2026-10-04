@@ -1,0 +1,801 @@
+{
+  "version": "2026-09-18.1",
+  "snapshot_date": "2026-09-18",
+  "currency": "CNY",
+  "billing_unit": "second",
+  "source": "src/new-api/setting/video_capability/profiles.json + docs/星盘AI_视频模型接入指南.md + 已只读核对的公开报价",
+  "notes": [
+    "本表只收录当前公开的 13 个视频型号；旧按条 H3（minimax-h3-720p / minimax-h3-2k）已停止新建，不在表内。",
+    "capability_modes 为能力源（profiles.json）词表；request_modes 为线上 metadata.mode 实际取值，两者词表不同，不要混用。",
+    "price_cny_per_second 为标准报价估算字段，专属分组实际价以 /api/pricing 或账户页面为准；它不是请求字段。",
+    "display_name / groups / price_cny_per_second / capability_modes / reference_limits / switches / prompt_max_characters / reference_rules 均为本站能力描述字段；创建请求只接受 model/prompt/seconds/metadata.{ratio,mode,image_urls,video_urls,audio_urls,first_frame_url,last_frame_url,generate_audio,face_mode}。",
+    "upload_limits 为全局上传规则；request_fields 列出请求面字段白名单。"
+  ],
+  "request_fields": {
+    "top_level": [
+      "model",
+      "prompt",
+      "seconds"
+    ],
+    "metadata": [
+      "ratio",
+      "mode",
+      "image_urls",
+      "video_urls",
+      "audio_urls",
+      "first_frame_url",
+      "last_frame_url",
+      "generate_audio",
+      "face_mode"
+    ],
+    "headers": [
+      "Authorization",
+      "Content-Type: application/json",
+      "Idempotency-Key"
+    ]
+  },
+  "upload_limits": {
+    "endpoint": "POST /reference-assets（无 /v1 前缀，经画布代理为 POST /site/reference-assets）",
+    "body": "文件原始字节（非 JSON/Base64/multipart）",
+    "image": {
+      "content_types": [
+        "image/png",
+        "image/jpeg",
+        "image/webp"
+      ],
+      "extensions": [
+        "png",
+        "jpg",
+        "jpeg",
+        "webp"
+      ],
+      "max_mib": 30
+    },
+    "video": {
+      "content_types": [
+        "video/mp4",
+        "video/webm"
+      ],
+      "extensions": [
+        "mp4",
+        "webm"
+      ],
+      "max_mib": 100
+    },
+    "audio": {
+      "content_types": [
+        "audio/mpeg",
+        "audio/wav",
+        "audio/x-wav",
+        "audio/mp4"
+      ],
+      "extensions": [
+        "mp3",
+        "wav",
+        "m4a"
+      ],
+      "max_mib": 30
+    },
+    "concurrency": 3,
+    "asset_ttl_seconds": 86400,
+    "rule": "全部素材上传成功后才允许创建一次任务；部分失败或取消不得创建，草稿保留"
+  },
+  "models": {
+    "minimax-h3-768p-per-second": {
+      "display_name": "H3 768P 按秒",
+      "family": "h3",
+      "groups": [
+        "视频专线"
+      ],
+      "price_cny_per_second": 0.15,
+      "resolution": "768P",
+      "seconds": {
+        "min": 4,
+        "max": 15,
+        "default": 15
+      },
+      "ratios": {
+        "options": [
+          "auto",
+          "16:9",
+          "9:16",
+          "1:1",
+          "4:3",
+          "3:4"
+        ],
+        "default": "16:9"
+      },
+      "reference_limits": {
+        "image": 9,
+        "video": 3,
+        "audio": 3,
+        "total": 12
+      },
+      "capability_modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "request_modes": [
+        "text_to_video",
+        "omni_reference",
+        "frames"
+      ],
+      "switches": {
+        "generate_audio": false,
+        "face_mode": false
+      },
+      "prompt_max_characters": 60000,
+      "reference_rules": [
+        "音频参考不能单独存在，必须同时带图片或视频",
+        "frames 模式可只给 first_frame_url，不可只给 last_frame_url",
+        "frames 模式画幅主要由素材决定，ratio 不保证强制裁切"
+      ],
+      "billing_unit": "second"
+    },
+    "minimax-h3-2k-per-second": {
+      "display_name": "H3 2K 按秒",
+      "family": "h3",
+      "groups": [
+        "视频专线"
+      ],
+      "price_cny_per_second": 0.2,
+      "resolution": "2K",
+      "seconds": {
+        "min": 4,
+        "max": 15,
+        "default": 15
+      },
+      "ratios": {
+        "options": [
+          "auto",
+          "16:9",
+          "9:16",
+          "1:1",
+          "4:3",
+          "3:4"
+        ],
+        "default": "16:9"
+      },
+      "reference_limits": {
+        "image": 9,
+        "video": 3,
+        "audio": 3,
+        "total": 12
+      },
+      "capability_modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "request_modes": [
+        "text_to_video",
+        "omni_reference",
+        "frames"
+      ],
+      "switches": {
+        "generate_audio": false,
+        "face_mode": false
+      },
+      "prompt_max_characters": 60000,
+      "reference_rules": [
+        "音频参考不能单独存在，必须同时带图片或视频",
+        "frames 模式可只给 first_frame_url，不可只给 last_frame_url",
+        "frames 模式画幅主要由素材决定，ratio 不保证强制裁切"
+      ],
+      "billing_unit": "second"
+    },
+    "seedance-2.5-vip-480p": {
+      "display_name": "SD 2.5 稳定480P",
+      "family": "sd25",
+      "groups": [
+        "default",
+        "视频专线"
+      ],
+      "price_cny_per_second": 0.55,
+      "resolution": "480P",
+      "seconds": {
+        "min": 4,
+        "max": 30,
+        "default": 4
+      },
+      "ratios": {
+        "options": [
+          "16:9",
+          "9:16",
+          "1:1",
+          "4:3",
+          "3:4",
+          "21:9"
+        ],
+        "default": "16:9"
+      },
+      "reference_limits": {
+        "image": 30,
+        "video": 10,
+        "audio": 10,
+        "total": 50
+      },
+      "capability_modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "request_modes": [
+        "references",
+        "frames"
+      ],
+      "switches": {
+        "generate_audio": true,
+        "face_mode": true
+      },
+      "prompt_max_characters": 60000,
+      "reference_rules": [
+        "frames 模式 first_frame_url 与 last_frame_url 必须同时提供",
+        "参考视频合计时长向上取整后 ≤30 秒（服务端检测）",
+        "face_mode 需要至少一张参考图或首尾帧"
+      ],
+      "billing_unit": "second"
+    },
+    "seedance-2.5-vip-720p": {
+      "display_name": "SD 2.5 稳定720P",
+      "family": "sd25",
+      "groups": [
+        "default",
+        "视频专线"
+      ],
+      "price_cny_per_second": 1.18,
+      "resolution": "720P",
+      "seconds": {
+        "min": 4,
+        "max": 30,
+        "default": 4
+      },
+      "ratios": {
+        "options": [
+          "16:9",
+          "9:16",
+          "1:1",
+          "4:3",
+          "3:4",
+          "21:9"
+        ],
+        "default": "16:9"
+      },
+      "reference_limits": {
+        "image": 30,
+        "video": 10,
+        "audio": 10,
+        "total": 50
+      },
+      "capability_modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "request_modes": [
+        "references",
+        "frames"
+      ],
+      "switches": {
+        "generate_audio": true,
+        "face_mode": true
+      },
+      "prompt_max_characters": 60000,
+      "reference_rules": [
+        "frames 模式 first_frame_url 与 last_frame_url 必须同时提供",
+        "参考视频合计时长向上取整后 ≤30 秒（服务端检测）",
+        "face_mode 需要至少一张参考图或首尾帧"
+      ],
+      "billing_unit": "second"
+    },
+    "seedance-2.5-vip-1080p": {
+      "display_name": "SD 2.5 稳定1080P",
+      "family": "sd25",
+      "groups": [
+        "default",
+        "视频专线"
+      ],
+      "price_cny_per_second": 4.38,
+      "resolution": "1080P",
+      "seconds": {
+        "min": 4,
+        "max": 30,
+        "default": 4
+      },
+      "ratios": {
+        "options": [
+          "16:9",
+          "9:16",
+          "1:1"
+        ],
+        "default": "16:9"
+      },
+      "reference_limits": {
+        "image": 30,
+        "video": 10,
+        "audio": 10,
+        "total": 50
+      },
+      "capability_modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "request_modes": [
+        "references",
+        "frames"
+      ],
+      "switches": {
+        "generate_audio": true,
+        "face_mode": true
+      },
+      "prompt_max_characters": 60000,
+      "reference_rules": [
+        "frames 模式 first_frame_url 与 last_frame_url 必须同时提供",
+        "参考视频合计时长向上取整后 ≤30 秒（服务端检测）",
+        "face_mode 需要至少一张参考图或首尾帧"
+      ],
+      "billing_unit": "second"
+    },
+    "seedance-2.5-discount-480p": {
+      "display_name": "SD 2.5 折扣480P",
+      "family": "sd25",
+      "groups": [
+        "default",
+        "视频专线"
+      ],
+      "price_cny_per_second": 0.44,
+      "resolution": "480P",
+      "seconds": {
+        "min": 4,
+        "max": 30,
+        "default": 4
+      },
+      "ratios": {
+        "options": [
+          "16:9",
+          "9:16",
+          "1:1",
+          "4:3",
+          "3:4",
+          "21:9"
+        ],
+        "default": "16:9"
+      },
+      "reference_limits": {
+        "image": 30,
+        "video": 10,
+        "audio": 10,
+        "total": 50
+      },
+      "capability_modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "request_modes": [
+        "references",
+        "frames"
+      ],
+      "switches": {
+        "generate_audio": true,
+        "face_mode": true
+      },
+      "prompt_max_characters": 5000,
+      "reference_rules": [
+        "frames 模式 first_frame_url 与 last_frame_url 必须同时提供",
+        "参考视频合计时长向上取整后 ≤30 秒（服务端检测）",
+        "face_mode 需要至少一张参考图或首尾帧"
+      ],
+      "billing_unit": "second"
+    },
+    "seedance-2.5-discount-720p": {
+      "display_name": "SD 2.5 折扣720P",
+      "family": "sd25",
+      "groups": [
+        "default",
+        "视频专线"
+      ],
+      "price_cny_per_second": 0.66,
+      "resolution": "720P",
+      "seconds": {
+        "min": 4,
+        "max": 30,
+        "default": 4
+      },
+      "ratios": {
+        "options": [
+          "16:9",
+          "9:16",
+          "1:1",
+          "4:3",
+          "3:4",
+          "21:9"
+        ],
+        "default": "16:9"
+      },
+      "reference_limits": {
+        "image": 30,
+        "video": 10,
+        "audio": 10,
+        "total": 50
+      },
+      "capability_modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "request_modes": [
+        "references",
+        "frames"
+      ],
+      "switches": {
+        "generate_audio": true,
+        "face_mode": true
+      },
+      "prompt_max_characters": 5000,
+      "reference_rules": [
+        "frames 模式 first_frame_url 与 last_frame_url 必须同时提供",
+        "参考视频合计时长向上取整后 ≤30 秒（服务端检测）",
+        "face_mode 需要至少一张参考图或首尾帧"
+      ],
+      "billing_unit": "second"
+    },
+    "seedance-2.5-special-480p": {
+      "display_name": "SD 2.5 特殊480P",
+      "family": "sd25",
+      "groups": [
+        "default",
+        "视频专线"
+      ],
+      "price_cny_per_second": 0.63,
+      "resolution": "480P",
+      "seconds": {
+        "min": 4,
+        "max": 30,
+        "default": 4
+      },
+      "ratios": {
+        "options": [
+          "16:9",
+          "9:16"
+        ],
+        "default": "16:9"
+      },
+      "reference_limits": {
+        "image": 30,
+        "video": 9,
+        "audio": 9,
+        "total": 48
+      },
+      "capability_modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "request_modes": [
+        "references",
+        "frames"
+      ],
+      "switches": {
+        "generate_audio": false,
+        "face_mode": false
+      },
+      "prompt_max_characters": 5000,
+      "reference_rules": [
+        "frames 模式 first_frame_url 与 last_frame_url 必须同时提供",
+        "参考视频合计时长向上取整后 ≤30 秒（服务端检测）",
+        "本型号无声音/人脸开关，显式 false 也不发送"
+      ],
+      "billing_unit": "second"
+    },
+    "seedance-2.5-special-720p": {
+      "display_name": "SD 2.5 特殊720P",
+      "family": "sd25",
+      "groups": [
+        "default",
+        "视频专线"
+      ],
+      "price_cny_per_second": 0.88,
+      "resolution": "720P",
+      "seconds": {
+        "min": 4,
+        "max": 30,
+        "default": 4
+      },
+      "ratios": {
+        "options": [
+          "16:9",
+          "9:16"
+        ],
+        "default": "16:9"
+      },
+      "reference_limits": {
+        "image": 30,
+        "video": 9,
+        "audio": 9,
+        "total": 48
+      },
+      "capability_modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "request_modes": [
+        "references",
+        "frames"
+      ],
+      "switches": {
+        "generate_audio": false,
+        "face_mode": false
+      },
+      "prompt_max_characters": 5000,
+      "reference_rules": [
+        "frames 模式 first_frame_url 与 last_frame_url 必须同时提供",
+        "参考视频合计时长向上取整后 ≤30 秒（服务端检测）",
+        "本型号无声音/人脸开关，显式 false 也不发送"
+      ],
+      "billing_unit": "second"
+    },
+    "wan-3.0": {
+      "display_name": "Wan 3.0",
+      "family": "wan",
+      "groups": [
+        "default",
+        "视频专线"
+      ],
+      "price_cny_per_second": 0.45,
+      "resolution": "1080P",
+      "seconds": {
+        "min": 5,
+        "max": 30,
+        "default": 5
+      },
+      "ratios": {
+        "options": [
+          "16:9",
+          "9:16",
+          "1:1",
+          "4:3",
+          "3:4"
+        ],
+        "default": "16:9"
+      },
+      "reference_limits": {
+        "image": 10,
+        "video": 5,
+        "audio": 5,
+        "total": 20
+      },
+      "capability_modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference"
+      ],
+      "request_modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference"
+      ],
+      "switches": {
+        "generate_audio": true,
+        "face_mode": false
+      },
+      "prompt_max_characters": 32000,
+      "reference_rules": [
+        "image_to_video 模式恰好一张图，不能同时带视频/音频",
+        "不支持首尾帧（无 frames 模式）"
+      ],
+      "billing_unit": "second"
+    },
+    "wan-3.0-prime": {
+      "display_name": "Wan 3.0 Prime",
+      "family": "wan",
+      "groups": [
+        "default",
+        "视频专线"
+      ],
+      "price_cny_per_second": 0.45,
+      "resolution": "1080P",
+      "seconds": {
+        "min": 5,
+        "max": 30,
+        "default": 5
+      },
+      "ratios": {
+        "options": [
+          "16:9",
+          "9:16",
+          "1:1",
+          "4:3",
+          "3:4"
+        ],
+        "default": "16:9"
+      },
+      "reference_limits": {
+        "image": 10,
+        "video": 5,
+        "audio": 5,
+        "total": 20
+      },
+      "capability_modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference"
+      ],
+      "request_modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference"
+      ],
+      "switches": {
+        "generate_audio": true,
+        "face_mode": false
+      },
+      "prompt_max_characters": 32000,
+      "reference_rules": [
+        "image_to_video 模式恰好一张图，不能同时带视频/音频",
+        "不支持首尾帧（无 frames 模式）",
+        "Prime 与 Wan 3.0 公开参数价格相同，不保证画质或速度更优"
+      ],
+      "billing_unit": "second"
+    },
+    "minimax-h3-768p-limited": {
+      "display_name": "能力受限768p",
+      "family": "h3",
+      "groups": [
+        "视频专线"
+      ],
+      "billing_unit": "request",
+      "price_cny_per_request": 1.5,
+      "resolution": "768P",
+      "seconds": {
+        "min": 6,
+        "max": 15,
+        "default": 15
+      },
+      "ratios": {
+        "options": [
+          "16:9"
+        ],
+        "default": "16:9"
+      },
+      "reference_limits": {
+        "image": 9,
+        "video": 0,
+        "audio": 3,
+        "total": 12
+      },
+      "capability_modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference"
+      ],
+      "request_modes": [
+        "text_to_video",
+        "omni_reference"
+      ],
+      "switches": {
+        "generate_audio": false,
+        "face_mode": false
+      },
+      "prompt_max_characters": 7000,
+      "reference_rules": [
+        "每次任务固定 ¥1.50；不按时长追加费用。",
+        "支持格式以本站素材上传白名单及当前模型限制为准。"
+      ],
+      "allowed_seconds": [
+        6,
+        10,
+        15
+      ]
+    },
+    "minimax-h3-768p-full-slow": {
+      "display_name": "满参慢速版768p",
+      "family": "h3",
+      "groups": [
+        "视频专线"
+      ],
+      "billing_unit": "second",
+      "resolution": "768P",
+      "seconds": {
+        "min": 1,
+        "max": 15,
+        "default": 15
+      },
+      "ratios": {
+        "options": [
+          "auto",
+          "21:9",
+          "16:9",
+          "9:16",
+          "1:1",
+          "4:3",
+          "3:4"
+        ],
+        "default": "16:9"
+      },
+      "reference_limits": {
+        "image": 9,
+        "video": 3,
+        "audio": 3,
+        "total": 12
+      },
+      "capability_modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "request_modes": [
+        "text_to_video",
+        "omni_reference",
+        "frames"
+      ],
+      "switches": {
+        "generate_audio": false,
+        "face_mode": false
+      },
+      "prompt_max_characters": 7000,
+      "reference_rules": [
+        "按请求输出秒数计费：¥0.10/秒；1/5/10/15秒分别为¥0.10/0.50/1.00/1.50，不按成片小数秒追加。",
+        "固定768P，输出1–15整数秒，默认15秒；9图/3视频/3音频，合计最多12项。",
+        "图片≤30MB（PNG/JPEG/WebP）、视频≤50MB（MP4 H.264/H.265）、音频≤15MB（MP3/WAV/M4A）；MB为1000000字节。",
+        "参考视频和音频每条2–15秒，视频合计≤15秒、音频合计≤15秒。",
+        "支持纯音频参考、仅首帧、仅尾帧及首尾帧；首尾帧不得混用普通参考素材，两帧宽高比差异≤2%。",
+        "支持16:9、9:16、1:1、4:3、3:4、21:9；auto需要图片或视频。",
+        "提示词引用转换后最多7000字符；不开放声音开关、人脸开关、视频续写或任意上游参数。",
+        "生成较慢，请持续查询原任务，不要因等待较久换幂等键重复创建。"
+      ],
+      "supports_audio_only": true,
+      "supports_last_frame_only": true,
+      "media_max_bytes": {
+        "image": 30000000,
+        "video": 50000000,
+        "audio": 15000000
+      },
+      "media_content_types": {
+        "image": [
+          "image/png",
+          "image/jpeg",
+          "image/webp"
+        ],
+        "video": [
+          "video/mp4"
+        ],
+        "audio": [
+          "audio/mpeg",
+          "audio/wav",
+          "audio/x-wav",
+          "audio/mp4"
+        ]
+      },
+      "price_cny_per_second": 0.1
+    }
+  },
+  "not_offered": {
+    "说明": "以下为 MiniMax 客户端契约中见过、但本站未开放的能力；不得作为画布已可用功能，是否支持需对上游另行验证",
+    "items": [
+      "H3 video-extension 视频续写（MiniMax 侧输入 2–15s → 输出 5–20s、仅 768P）",
+      "H3 MiniMax-H3 Audio 音频续写",
+      "H3-Max / H3-Max-Turbo 型号及 prompt_expansion_mode",
+      "H3 按秒档及能力受限768p的21:9比例未开放；满参慢速版768p支持21:9，以该型号ratios.options为准",
+      "H3 generate_audio 开关（本站 H3 声音为模型默认，无开关）",
+      "SD video-edit / video-extend 模式",
+      "SD output_format=mov 输出",
+      "wan2.6-i2v 系列（与本站 wan-3.0 不同代际接口，不得混用）",
+      "kling / veo3 / jimeng 等未上架厂商型号",
+      "IR 提示词增强参数（H3 请求无需传入）"
+    ]
+  }
+}

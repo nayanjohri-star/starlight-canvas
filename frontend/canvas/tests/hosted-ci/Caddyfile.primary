@@ -1,0 +1,17 @@
+# CI-only stand-in for the primary site block (deploy/production/Caddyfile). HTTPS/ACME is replaced by plain
+# HTTP on 127.0.0.1:8088; everything under test is imported unmodified from deploy/canvas-web/primary-site.caddy.
+# The snippet routes /canvas-api/* to the real adapter process (deploy/canvas-hosted-api/server.mjs), whose
+# NEW_API_URL points at the test's synthetic New API (synthetic users + supplier mock). No other API route exists.
+{
+	admin off
+	auto_https off
+}
+
+:8088 {
+	import /etc/caddy/primary-site.caddy
+
+
+	handle {
+		respond "not found" 404
+	}
+}

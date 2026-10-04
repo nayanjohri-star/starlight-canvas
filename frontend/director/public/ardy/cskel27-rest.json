@@ -1,0 +1,594 @@
+{
+  "schema": "cskel27.rest.v1",
+  "rig": "x-bot-tpose",
+  "source": {
+    "title": "Starlight procedural maquettes",
+    "author": "Starlight contributors",
+    "license": "AGPL-3.0-or-later",
+    "units": "centimetres",
+    "up": "Y"
+  },
+  "joints": [
+    {
+      "name": "Hips",
+      "index": 0,
+      "matched_bone": "mixamorigHips",
+      "rest": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "name": "Spine",
+      "index": 1,
+      "matched_bone": "mixamorigSpine",
+      "rest": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "name": "Spine1",
+      "index": 2,
+      "matched_bone": "mixamorigSpine1",
+      "rest": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "name": "Spine2",
+      "index": 3,
+      "matched_bone": "mixamorigSpine2",
+      "rest": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "name": "Spine3",
+      "index": 4,
+      "matched_bone": null,
+      "rest": null
+    },
+    {
+      "name": "Neck",
+      "index": 5,
+      "matched_bone": "mixamorigNeck",
+      "rest": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "name": "Head",
+      "index": 6,
+      "matched_bone": "mixamorigHead",
+      "rest": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "name": "RightShoulder",
+      "index": 7,
+      "matched_bone": "mixamorigRightShoulder",
+      "rest": [
+        [
+          2.220446049250313e-16,
+          0,
+          -1
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          1,
+          0,
+          2.220446049250313e-16
+        ]
+      ]
+    },
+    {
+      "name": "RightArm",
+      "index": 8,
+      "matched_bone": "mixamorigRightArm",
+      "rest": [
+        [
+          2.220446049250313e-16,
+          0,
+          -1
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          1,
+          0,
+          2.220446049250313e-16
+        ]
+      ]
+    },
+    {
+      "name": "RightForeArm",
+      "index": 9,
+      "matched_bone": "mixamorigRightForeArm",
+      "rest": [
+        [
+          2.220446049250313e-16,
+          0,
+          -1
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          1,
+          0,
+          2.220446049250313e-16
+        ]
+      ]
+    },
+    {
+      "name": "RightHand",
+      "index": 10,
+      "matched_bone": "mixamorigRightHand",
+      "rest": [
+        [
+          2.220446049250313e-16,
+          0,
+          -1
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          1,
+          0,
+          2.220446049250313e-16
+        ]
+      ]
+    },
+    {
+      "name": "RightHandEnd",
+      "index": 11,
+      "matched_bone": "mixamorigRightHandEnd",
+      "rest": [
+        [
+          2.220446049250313e-16,
+          0,
+          -1
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          1,
+          0,
+          2.220446049250313e-16
+        ]
+      ]
+    },
+    {
+      "name": "RightHandThumb1",
+      "index": 12,
+      "matched_bone": "mixamorigRightHandThumb1",
+      "rest": [
+        [
+          2.220446049250313e-16,
+          0,
+          -1
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          1,
+          0,
+          2.220446049250313e-16
+        ]
+      ]
+    },
+    {
+      "name": "LeftShoulder",
+      "index": 13,
+      "matched_bone": "mixamorigLeftShoulder",
+      "rest": [
+        [
+          2.220446049250313e-16,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          -1,
+          0,
+          2.220446049250313e-16
+        ]
+      ]
+    },
+    {
+      "name": "LeftArm",
+      "index": 14,
+      "matched_bone": "mixamorigLeftArm",
+      "rest": [
+        [
+          2.220446049250313e-16,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          -1,
+          0,
+          2.220446049250313e-16
+        ]
+      ]
+    },
+    {
+      "name": "LeftForeArm",
+      "index": 15,
+      "matched_bone": "mixamorigLeftForeArm",
+      "rest": [
+        [
+          2.220446049250313e-16,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          -1,
+          0,
+          2.220446049250313e-16
+        ]
+      ]
+    },
+    {
+      "name": "LeftHand",
+      "index": 16,
+      "matched_bone": "mixamorigLeftHand",
+      "rest": [
+        [
+          2.220446049250313e-16,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          -1,
+          0,
+          2.220446049250313e-16
+        ]
+      ]
+    },
+    {
+      "name": "LeftHandEnd",
+      "index": 17,
+      "matched_bone": "mixamorigLeftHandEnd",
+      "rest": [
+        [
+          2.220446049250313e-16,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          -1,
+          0,
+          2.220446049250313e-16
+        ]
+      ]
+    },
+    {
+      "name": "LeftHandThumb1",
+      "index": 18,
+      "matched_bone": "mixamorigLeftHandThumb1",
+      "rest": [
+        [
+          2.220446049250313e-16,
+          0,
+          1
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          -1,
+          0,
+          2.220446049250313e-16
+        ]
+      ]
+    },
+    {
+      "name": "RightUpLeg",
+      "index": 19,
+      "matched_bone": "mixamorigRightUpLeg",
+      "rest": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "name": "RightLeg",
+      "index": 20,
+      "matched_bone": "mixamorigRightLeg",
+      "rest": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "name": "RightFoot",
+      "index": 21,
+      "matched_bone": "mixamorigRightFoot",
+      "rest": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "name": "RightToeBase",
+      "index": 22,
+      "matched_bone": "mixamorigRightToeBase",
+      "rest": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "name": "LeftUpLeg",
+      "index": 23,
+      "matched_bone": "mixamorigLeftUpLeg",
+      "rest": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "name": "LeftLeg",
+      "index": 24,
+      "matched_bone": "mixamorigLeftLeg",
+      "rest": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "name": "LeftFoot",
+      "index": 25,
+      "matched_bone": "mixamorigLeftFoot",
+      "rest": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ]
+    },
+    {
+      "name": "LeftToeBase",
+      "index": 26,
+      "matched_bone": "mixamorigLeftToeBase",
+      "rest": [
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ]
+    }
+  ],
+  "missing": [
+    "Spine3"
+  ]
+}

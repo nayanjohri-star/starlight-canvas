@@ -1,0 +1,42 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { join } from 'node:path';
+import { chromium, CHROME, ROOT, SHOTS, createCanvasServer, makeState, mockUpstream, MP4, addAsset, setKey, watchEgress } from './e2e-helpers.mjs';
+
+test('canvas media opens at screen size, zooms originals and plays video without uploads', { timeout: 60000 }, async t => {
+  const state = makeState(), server = createCanvasServer({ staticDir: process.env.CANVAS_TEST_DIST || join(ROOT, 'dist'), directorDir: join(ROOT, '../../docs/minimax-video-ref/bundled-plugins/3d-director-stage'), upstreamFetch: mockUpstream(state) });
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const browser = await chromium.launch({ executablePath: CHROME, headless: true });
+  t.after(async () => { await browser.close(); server.closeAllConnections(); await new Promise(r => server.close(r)); });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  const errors = []; page.on('pageerror', e => errors.push(e.message));
+  const egress = await watchEgress(page, { abort: true });
+  await page.goto(`http://127.0.0.1:${server.address().port}/`); await page.waitForFunction(() => window.__xp?.store.project); await setKey(page);
+  const png = await page.evaluate(async () => {
+    const c = document.createElement('canvas'); c.width = 2400; c.height = 3600;
+    const x = c.getContext('2d'); x.fillStyle = '#f7f7f2'; x.fillRect(0, 0, c.width, c.height);
+    x.fillStyle = '#283e38'; x.font = '120px sans-serif'; x.fillText('Reference details', 80, 180);
+    x.strokeRect(80, 300, 2200, 3000);
+    return [...new Uint8Array(await (await new Promise(r => c.toBlob(r))).arrayBuffer())];
+  });
+  const a = await addAsset(page, png, '完整竖版参考图.png', 'image', 200, 70);
+  const v = await addAsset(page, MP4, '运镜参考.mp4', 'video', 480, 70);
+  await page.evaluate(() => { window.__xp.board.view.scale = .64; window.__xp.board.applyView(); });
+  await page.getByRole('button', { name: '放大预览 完整竖版参考图.png', exact: true }).click();
+  await page.waitForFunction(() => document.querySelector('.media-preview-stage img')?.naturalWidth === 2400);
+  const fitted = await page.locator('.media-preview-stage img').boundingBox();
+  assert.ok(fitted.height > 500, 'a small canvas thumbnail opens in a viewport-sized preview');
+  await page.getByRole('button', { name: '原始大小', exact: true }).click();
+  assert.equal(Math.round((await page.locator('.media-preview-stage img').boundingBox()).width), 2400);
+  await page.getByRole('button', { name: '适应窗口', exact: true }).click();
+  await page.screenshot({ path: join(SHOTS, 'canvas-media-preview.png') });
+  await page.keyboard.press('Escape'); assert.equal(await page.locator('.media-preview-dialog').count(), 0);
+  await page.getByRole('button', { name: '打开大预览 运镜参考.mp4', exact: true }).click();
+  await page.waitForFunction(() => document.querySelector('.media-preview-stage video')?.readyState >= 2);
+  await page.locator('.media-preview-stage video').evaluate(v => v.play());
+  await page.waitForFunction(() => document.querySelector('.media-preview-stage video').currentTime > 0);
+  await page.evaluate(() => window.__xp.store.newProject('clean project'));
+  await page.waitForFunction(() => !document.querySelector('.media-preview-dialog'));
+  assert.equal(state.creates.length + state.uploads.length, 0);
+  assert.deepEqual(errors, []); assert.deepEqual(egress(), []);
+});

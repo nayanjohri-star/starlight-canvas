@@ -1,0 +1,44 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {join} from 'node:path';
+import {chromium,createCanvasServer,ROOT,CHROME} from './e2e-helpers.mjs';
+
+test('桌面剪辑器：刻度定位、缩放、播放头、修剪和分割使用同一时间坐标',{timeout:45000},async t=>{
+ const server=createCanvasServer({staticDir:process.env.CANVAS_TEST_DIST||join(ROOT,'dist'),directorDir:join(ROOT,'../../docs/minimax-video-ref/bundled-plugins/3d-director-stage'),upstreamFetch:async()=>{throw new Error('验收禁止真实生成');}});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=`http://127.0.0.1:${server.address().port}`;
+ const browser=await chromium.launch({executablePath:CHROME,headless:true});
+ t.after(async()=>{await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));});
+ const context=await browser.newContext({viewport:{width:1440,height:900}});
+ await context.route('**/*',r=>new URL(r.request().url()).origin===origin?r.continue():r.abort());
+ const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(origin);await page.waitForFunction(()=>window.__xp?.timeline);
+ await page.evaluate(async()=>{
+  const xp=window.__xp,c=document.createElement('canvas');c.width=320;c.height=180;
+  c.getContext('2d').fillRect(0,0,320,180);
+  const a=await xp.assets.registerBlob(await new Promise(r=>c.toBlob(r)),'剪辑参考.png','image');
+  await xp.timeline.addAsset(a.id);xp.timeline.open();
+ });
+ assert.equal(await page.locator('.tl-ruler').evaluate(e=>getComputedStyle(e).position),'relative','时间刻度样式必须实际加载');
+ await page.locator('.tl-ruler').click({position:{x:80,y:10}});
+ assert.match(await page.locator('.tl-time').innerText(),/^00:02\.0/);
+ assert.equal(await page.locator('.tl-strip .tl-playhead').first().evaluate(e=>e.style.left),'80px');
+ await page.locator('.tl-zoom').selectOption('80');
+ assert.equal(await page.locator('.tl-strip .tl-playhead').first().evaluate(e=>e.style.left),'160px');
+ await page.locator('.tl-root').getByRole('button',{name:/播放$/}).click();
+ await page.waitForFunction(()=>parseFloat(document.querySelector('.tl-strip .tl-playhead').style.left)>175);
+ await page.locator('.tl-root').getByRole('button',{name:/暂停$/}).click();
+ await page.locator('.tl-root').getByRole('button',{name:'回到开头',exact:true}).click();
+ assert.match(await page.locator('.tl-time').innerText(),/^00:00\.0/);
+ await page.locator('.tl-clip').first().click({position:{x:80,y:15}});
+ const end=page.locator('.tl-inspector .field').filter({has:page.locator('label',{hasText:'结束（秒）'})}).locator('input');
+ await end.fill('8');await end.press('Tab');
+ await page.waitForFunction(()=>window.__xp.timeline.clips()[0].end===8);
+ await page.locator('.tl-ruler').click({position:{x:240,y:10}});
+ await page.locator('.tl-root').getByRole('button',{name:/在播放头分割/}).click();
+ const clips=await page.evaluate(()=>window.__xp.timeline.clips().map(c=>({start:c.start,end:c.end})));
+ assert.deepEqual(clips,[{start:0,end:3},{start:3,end:8}]);
+ await page.keyboard.press('Escape');await page.waitForSelector('.tl-root',{state:'detached'});
+ await page.locator('#btn-timeline').click();
+ assert.equal(await page.locator('.tl-clip').count(),2,'关闭和重开仍保留剪辑结果');
+ assert.deepEqual(errors,[]);
+});

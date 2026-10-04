@@ -1,0 +1,397 @@
+// The Studio command runner. The registry owns declarations/implementations;
+// the editor ports own native state/history, and the existing journal owns
+// idempotency. Synchronous UI actions stay synchronous (including user gestures).
+import { HISTORY_LIMIT } from './history.js';
+import { StudioProtocolError, StudioSchemas, validateStudioSchema, validateReceipt, validateStudioIdentity } from './studio-agent-protocol.js';
+
+// A batching/retention adapter over the existing object history owner. The
+// native store still owns every snapshot and transition; this tracks only the
+// retained pre-image identities needed by receipts.
+export function withCommandHistory(store) {
+  let past = [], future = [], group = null;
+  const adapter = Object.create(store);
+  const pushed = before => { if (before !== store.present()) { past.push(before); past = past.slice(-HISTORY_LIMIT); future = []; } };
+  adapter.hasHistoryState = state => state === store.present() || past.includes(state) || future.includes(state);
+  adapter.settle = (...args) => { const before = store.present(); store.settle(...args); pushed(before); };
+  adapter.applyAtomic = fn => {
+    if (group) { if (!group.running) fail('TARGET_BUSY', 'A command transaction owns the object history.'); return store.applyIn(group.token, fn); }
+    adapter.settle(); const before = store.present(); store.applyAtomic(fn); pushed(before);
+  };
+  adapter.begin = (...args) => { adapter.settle(); return store.begin(...args); };
+  adapter.end = (token, options) => { const before = store.present(), ended = store.end(token, options); if (options.commit) pushed(before); return ended; };
+  adapter.undo = () => { adapter.settle(); const before = store.present(), restored = store.undo(); if (restored !== null) { past.pop(); future.unshift(before); } return restored; };
+  adapter.redo = () => { const before = store.present(), restored = store.redo(); if (restored !== null) { past.push(before); future.shift(); } return restored; };
+  adapter.beginCommand = () => {
+    if (group) fail('TARGET_BUSY', 'An object command is already in progress.');
+    adapter.settle(); const before = store.present();
+    const current = { running: 0, token: store.begin('command-bus', () => { current.closed = true; group = null; }) }; group = current;
+    const check = () => { if (current.closed) fail('STALE_TARGET', 'Native object transaction was retired.'); };
+    return {
+      run(fn) { check(); current.running++; try { const result = fn(); if (result?.then) return result.finally(() => { current.running--; }); current.running--; return result; } catch (error) { current.running--; throw error; } },
+      commit() { check(); current.closed = true; group = null; store.end(current.token, { commit: true }); pushed(before); return before !== store.present(); },
+      cancel() { if (current.closed) return false; current.closed = true; group = null; return store.end(current.token, { commit: false }); },
+    };
+  };
+  return adapter;
+}
+
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const fail = (code, message) => { throw new StudioProtocolError(code, message); };
+const mapResult = (value, success, failure) => value?.then ? value.then(success, failure) : success(value);
+const toastWarnings = toasts => toasts.slice(-12).map(toast => ({ code: 'STUDIO_TOAST', message: [...toast.message].slice(0, 120).join('') }));
+let activeRunDepth = 0;
+export const isBusRunActive = () => activeRunDepth > 0;
+
+export function createCommandBus({ registry, ports }) {
+  const pending = new Map(), transactions = new Map(), jobs = new Map(), listeners = new Set();
+  let preview = null;
+  const previewCommands = new Set(['shot.set', 'shot.setCamera', 'shot.setCameraRail', 'shot.bindCamera', 'shot.rename',
+    'character.addWaypoint', 'character.moveWaypoint', 'ik.applyPose', 'character.setPromptBlocks']);
+  const confirmations = new Map(), historyReceipts = new Map();
+  function exposure(entry, args, request) {
+    if (request.origin === 'ui') return;
+    if (entry.exposure === 'ui-only') fail('CAPABILITY_MISSING', 'This command is available only from the Studio UI.');
+    if (entry.id === 'load_scenes') {
+      const ids = scenes => [...new Set(scenes.map(scene => scene.id))].sort();
+      if (same(ids(args.document.scenes), ids(registry.state().scenes))) return;
+    } else if (entry.exposure !== 'confirm' || entry.requiresConfirmation?.(registry.state(), args) === false) return;
+    const token = confirmations.get(request.confirmationToken);
+    if (!token || token.id !== entry.id || !same(token.args, args) || !same(token.host, ports.read().host) || token.expires < (ports.now ?? Date.now)()) fail('CONFIRMATION_REQUIRED', entry.confirmationReason ?? 'This command needs user confirmation.');
+    confirmations.delete(request.confirmationToken);
+  }
+  const emit = event => { for (const listener of listeners) listener(event); ports.emit?.(event); };
+  const identifier = StudioSchemas.TargetGuard.properties.targetId;
+  const object = properties => ({ type: 'object', properties, required: Object.keys(properties), additionalProperties: false });
+  const argsSchema = { type: 'object', properties: {}, required: [], additionalProperties: true };
+  const controls = {
+    'run.begin': object({ id: identifier, args: argsSchema }),
+    'run.update': object({ txId: identifier, args: argsSchema }),
+    'run.commit': object({ txId: identifier }),
+    'run.cancel': object({ txId: identifier }),
+    'job.await': { ...object({ jobId: identifier }), properties: { jobId: identifier, timeoutMs: { type: 'integer', minimum: 1, maximum: 300_000, default: 30_000 } } },
+    'job.cancel': object({ jobId: identifier }),
+    'edit.undo': { ...object({ receiptId: identifier }), required: [] },
+    'edit.redo': { ...object({ receiptId: identifier }), required: [] },
+  };
+  const clear = timer => (ports.clearTimeout ?? clearTimeout)(timer);
+  function cancelTransaction(tx, expired = false, reason = new StudioProtocolError('CANCELLED', 'Transaction was cancelled.')) {
+    transactions.delete(tx.txId); clear(tx.timer); if (tx.workTimer !== undefined) clear(tx.workTimer); tx.controller.abort(reason);
+    tx.session.cancel({ restore: same(tx.before.host, ports.read().host) });
+    emit({ type: 'transaction.cancelled', txId: tx.txId, expired });
+  }
+  function renew(tx) {
+    if (tx.timer !== undefined) clear(tx.timer);
+    tx.timer = (ports.setTimeout ?? setTimeout)(() => cancelTransaction(tx, true), ports.transactionIdleMs ?? 30_000);
+  }
+  function control(id, args, request, before) {
+    if (id === 'edit.undo' || id === 'edit.redo') {
+      const redo = id === 'edit.redo', historyEntryId = ports.history?.(redo);
+      const previous = args.receiptId ? ports.receipt(args.receiptId) : historyReceipts.get(historyEntryId)
+        ?? (historyEntryId ? { receiptId: historyEntryId, host: before.host, affectedIds: [before.host.sceneId],
+          undo: { historyEntryId, entries: 1, canUndoDirect: true } } : null);
+      if (!args.receiptId && !previous) return validateReceipt({ ok: true, status: 'noop', action: id,
+        commandId: request.commandId, receiptId: crypto.randomUUID(), host: before.host, authored: false, mutated: false,
+        revision: { before: before.revision, after: before.revision }, affectedIds: [], delta: [],
+        checks: { coverage: 'native-history-restoration' }, undo: null, warnings: [] });
+      if (!previous?.undo || !ports.isRetained(previous)) fail('UNDO_EXPIRED', 'The receipt no longer has a retained history entry.');
+      if (!same(previous.host, before.host)) fail('STALE_SCENE', 'The receipt belongs to another document.');
+      if (redo ? historyEntryId !== previous.undo.historyEntryId : !ports.canUndo(previous)) fail('UNDO_CONFLICT', 'Another edit owns the history boundary.');
+      (redo ? ports.redo : ports.undo)();
+      const after = ports.read(), ids = previous.affectedIds;
+      const restoredTargets = ids.map(targetId => ({ ...before.host, targetId, token: ports.readTarget?.(targetId) ?? `removed-${crypto.randomUUID()}` }));
+      return validateReceipt({ ok: true, status: redo ? 'applied' : 'undone', commandId: request.commandId, receiptId: crypto.randomUUID(), host: before.host,
+        authored: true, revision: { before: before.revision, after: after.revision }, affectedIds: ids,
+        delta: ids.slice(0, 8).map(targetId => ({ id: targetId, after: { token: restoredTargets.find(t => t.targetId === targetId).token } })),
+        checks: { coverage: 'native-history-restoration' }, undo: { ...previous.undo, canUndoDirect: redo }, warnings: [],
+        ...(redo ? { action: id, mutated: true } : { undoneReceiptId: previous.receiptId, restoredTargets }),
+        ...(ids.length > 8 ? { detailCursor: request.commandId } : {}) });
+    }
+    if (id.startsWith('job.')) {
+      const job = jobs.get(args.jobId);
+      if (!job || !same(job.host, before.host)) fail('STALE_TARGET', 'Job is not in this document.');
+      if (id === 'job.cancel' && !job.outcome) job.controller.abort(new StudioProtocolError('CANCELLED', 'Job was cancelled.'));
+      let timer;
+      const wait = id === 'job.await' && !job.outcome ? Promise.race([job.completion, new Promise((_, reject) => {
+        timer = (ports.setTimeout ?? setTimeout)(() => reject(new StudioProtocolError('TIMEOUT', 'Job is still running.')), args.timeoutMs);
+      })]) : job.completion;
+      return wait.then(value => validateReceipt({ ...value, commandId: request.commandId, ...(value.ok ? { receiptId: crypto.randomUUID() } : {}), jobId: job.id })).finally(() => { if (timer !== undefined) clear(timer); });
+    }
+    let tx;
+    if (id === 'run.begin') {
+      if (transactions.size) fail('TARGET_BUSY', 'Finish or cancel the open command transaction first.');
+      const prepared = registry.prepare(args.id, args.args);
+      exposure(prepared.entry, prepared.args, request);
+      if (prepared.entry.kind !== 'mutation') fail('INVALID_ARGUMENT', 'Only mutations can open a transaction.');
+      tx = { txId: crypto.randomUUID(), entry: prepared.entry, before, origin: request.origin, targetId: prepared.args.characterId ?? null, controller: new AbortController(),
+        session: ports.beginAction(prepared.entry.undoDomain, prepared.args.characterId ?? null), affectedIds: new Set(), toasts: [] };
+      transactions.set(tx.txId, tx); renew(tx);
+    } else {
+      tx = transactions.get(args.txId);
+      if (!tx || !same(tx.before.host, before.host)) fail('STALE_TARGET', 'Transaction is no longer open in this document.');
+      if (request.origin !== tx.origin) fail('TARGET_BUSY', 'This transaction belongs to another origin.');
+      if (tx.updating && id !== 'run.cancel') fail('TARGET_BUSY', 'A transaction update is still running.');
+      if (id === 'run.update') {
+        const prepared = registry.prepare(tx.entry.id, args.args);
+        if (tx.entry.undoDomain === 'motion' && prepared.args.characterId !== tx.targetId) fail('INVALID_ARGUMENT', 'A motion transaction keeps its original target.');
+        const shown = [], release = ports.captureToasts?.(toast => shown.push(typeof toast === 'string' ? { message: toast } : toast));
+        const context = { origin: request.origin, signal: tx.controller.signal, check() {
+          tx.controller.signal.throwIfAborted();
+          if (!transactions.has(tx.txId) || !same(tx.before.host, ports.read().host)) fail('STALE_TARGET', 'Transaction is no longer current.');
+        } };
+        const finish = result => {
+          release?.(); clear(tx.workTimer); tx.updating = false; context.check();
+          if (shown.length && ports.read().revision === before.revision) fail('TARGET_NOT_READY', shown.at(-1).message);
+          for (const target of result.affectedIds) tx.affectedIds.add(target);
+          tx.toasts.push(...shown);
+          renew(tx); return transactionReceipt(id, tx, request, before);
+        };
+        const rejected = error => {
+          release?.(); clear(tx.workTimer); tx.updating = false;
+          if (!(error instanceof StudioProtocolError) && shown.length && ports.read().revision === before.revision) error = new StudioProtocolError('TARGET_NOT_READY', shown.at(-1).message);
+          if (transactions.has(tx.txId)) cancelTransaction(tx);
+          throw error;
+        };
+        try {
+          tx.updating = true; clear(tx.timer);
+          tx.workTimer = (ports.setTimeout ?? setTimeout)(() => cancelTransaction(tx, true, new StudioProtocolError('TIMEOUT', `${tx.entry.id} exceeded its deadline.`)), tx.entry.timeoutMs ?? 30_000);
+          const updated = tx.session.run(() => registry.invoke(tx.entry, prepared.args, context));
+          if (!updated?.then) return finish(updated);
+          const cancelled = new Promise((_, reject) => tx.controller.signal.addEventListener('abort', () => reject(tx.controller.signal.reason), { once: true }));
+          return Promise.race([updated, cancelled]).then(finish, rejected);
+        } catch (error) { return rejected(error); }
+      }
+      if (id === 'run.cancel') cancelTransaction(tx);
+      if (id === 'run.commit') {
+        transactions.delete(tx.txId); clear(tx.timer);
+        try { tx.historyEntryId = tx.session.commit().historyEntryId; }
+        catch (error) { tx.session.cancel({ restore: false }); throw error; }
+      }
+    }
+    return transactionReceipt(id, tx, request, id === 'run.commit' ? tx.before : before);
+  }
+  function transactionReceipt(id, tx, request, before) {
+    const after = ports.read();
+    return validateReceipt({ ok: true, status: 'completed', kind: 'transaction', commandId: request.commandId, receiptId: crypto.randomUUID(), host: before.host,
+      action: id, txId: tx.txId, authored: Boolean(tx.historyEntryId), revision: { before: before.revision, after: after.revision },
+      affectedIds: [...tx.affectedIds], delta: [], checks: { coverage: 'wire-transaction' }, warnings: toastWarnings(tx.toasts),
+      undo: tx.historyEntryId ? { historyEntryId: tx.historyEntryId, entries: 1, canUndoDirect: true } : null });
+  }
+  function refusal(request, before, error, mutated) {
+    const changed = mutated ?? (ports.read().revision !== before.revision);
+    return validateReceipt({ ok: false, commandId: request.commandId, host: before.host,
+      code: error.code ?? 'INVALID_ARGUMENT', phase: changed ? 'commit' : 'admission', affectedIds: [], expectedTargets: [], currentTargets: [],
+      mutated: changed, preserved: { authoredState: changed ? 'changed' : 'unchanged' }, recovery: { action: 'inspect', retryAllowed: false },
+      message: [...String(error.message || error)].slice(0, 500).join('') });
+  }
+  function receipt(entry, request, before, result, historyEntryId, toasts = []) {
+    const after = ports.read(), changed = after.revision !== before.revision;
+    if (entry.kind === 'mutation' && changed && !historyEntryId) fail('UNCERTAIN_APPLY', `${entry.id} changed the scene without one undoable entry.`);
+    const completed = entry.kind === 'job' || entry.kind === 'document' || (entry.kind === 'mutation' && changed && after.revision > before.revision + 1);
+    const ids = completed || changed ? result.affectedIds : entry.kind === 'transient' ? [before.host.sceneId] : [];
+    // Human-readable labels may enumerate a large batch. Keep the protocol's
+    // bounded summary while preserving every affected ID and detail cursor.
+    const summaryPoints = [...result.summary];
+    const summary = summaryPoints.length > 240 ? summaryPoints.slice(0, 239).join('') + '…' : result.summary;
+    return validateReceipt({ ok: true, commandId: request.commandId, receiptId: crypto.randomUUID(), host: before.host,
+      action: entry.id, summary, status: completed ? 'completed' : entry.kind === 'transient' ? 'transient' : changed ? 'applied' : 'noop',
+      authored: changed, ...(completed ? { kind: entry.kind, ...(result.output === undefined ? {} : { output: result.output }), ...(same(before.host, after.host) ? {} : { nextHost: after.host }) } : entry.kind === 'transient' ? { view: { before: before.viewRevision ?? 0, after: after.viewRevision ?? 0 } } : { mutated: changed }),
+      revision: { before: before.revision, after: after.revision }, affectedIds: ids,
+      delta: ids.slice(0, 8).map(id => ({ id, after: ports.readback?.(id, after) ?? { removed: true } })),
+      checks: { coverage: `studio-action:${entry.id}` }, warnings: toastWarnings(toasts),
+      undo: historyEntryId ? { historyEntryId, entries: 1, canUndoDirect: true } : null, ...(ids.length > 8 ? { detailCursor: request.commandId } : {}) });
+  }
+  function executeRun(id, args = {}, options = {}) {
+    const request = { origin: 'ui', commandId: crypto.randomUUID(), ...options };
+    if (request.origin === 'ui' && (id === 'edit.undo' || id === 'edit.redo')) ports.finishHistoryGesture?.();
+    const before = ports.read(), journal = ports.journal();
+    let begun = false, releaseToasts, timer, foregroundTimer, job, applied = false, committedHistoryId;
+    const controller = new AbortController();
+    const clearTimer = () => {
+      if (timer !== undefined) clear(timer);
+      if (foregroundTimer !== undefined) clear(foregroundTimer);
+    };
+    const toasts = [];
+    const toastRefusal = () => toasts.length && ports.read().revision === before.revision ? new StudioProtocolError('TARGET_NOT_READY', toasts.at(-1).message) : null;
+    const remember = value => {
+      if (job?.background) {
+        const commandId = job.completionCommandId ??= crypto.randomUUID();
+        journal.begin(commandId);
+        value = validateReceipt({ ...value, commandId, jobId: job.id });
+      }
+      const recorded = journal.record(value);
+      if (recorded.undo?.canUndoDirect && !id.startsWith('edit.')) historyReceipts.set(recorded.undo.historyEntryId, recorded);
+      for (const [key, receipt] of historyReceipts) if (ports.isRetained?.(receipt) === false) historyReceipts.delete(key);
+      ports.remember?.(recorded); return recorded;
+    };
+    const rejected = error => {
+      clearTimer();
+      releaseToasts?.(); releaseToasts = null;
+      if (!(error instanceof StudioProtocolError)) error = toastRefusal() ?? error;
+      if (request.origin === 'ui' && error.uiMessage) ports.showRefusal?.(error.uiMessage);
+      const value = refusal(request, before, error, job ? applied : undefined);
+      const recorded = begun ? remember(value) : value;
+      if (job && !job.completion) { job.outcome = recorded; job.completion = Promise.resolve(recorded); emit({ type: 'job.completed', jobId: job.id, receipt: recorded }); }
+      return recorded;
+    };
+    try {
+      if (preview) fail('TARGET_BUSY', 'Apply or discard the current scene preview first.');
+      if (request.origin !== 'ui' && !same(validateStudioIdentity(request.host), before.host)) fail('STALE_SCENE', 'The live document changed.');
+      const signature = JSON.stringify({ id, args, ...request });
+      if (!journal.begin(request.commandId, signature)) return journal.get(request.commandId) ?? pending.get(request.commandId) ?? refusal(request, before, new StudioProtocolError('UNCERTAIN_APPLY', 'Command is still executing.'));
+      begun = true;
+      const prepared = controls[id] ? { args: validateStudioSchema(controls[id], args) } : registry.prepare(id, args);
+      const { entry, args: validated } = prepared;
+      if (request.origin !== 'ui') {
+        // Job controls observe/cancel an admitted identity; completion itself
+        // can advance the revision while their wire request is in transit.
+        // Document identity and the job's own publication fence still apply.
+        if (!['job.await', 'job.cancel'].includes(id) && request.expectedRevision !== before.revision) fail('STALE_SCENE', 'Authored state changed; obtain fresh intent.');
+        if (before.busy && !transactions.has(validated.txId) && !id.startsWith('job.')) fail('TARGET_BUSY', 'Finish the current editor gesture first.');
+      }
+      if (controls[id]) return mapResult(control(id, validated, request, before), remember, rejected);
+      if (transactions.size) fail('TARGET_BUSY', 'Finish or cancel the open command transaction first.');
+      exposure(entry, validated, request);
+      releaseToasts = ports.captureToasts?.(toast => toasts.push(typeof toast === 'string' ? { message: toast } : toast));
+      const domain = entry.domain ?? entry.undoDomain;
+      const targetId = entry.target?.(validated, before) ?? validated.characterId ?? validated.shotId ?? validated.objectId;
+      let token = targetId ? ports.readTarget?.(targetId) : null;
+      let domainRevision = domain ? before.domainRevisions?.[domain] : null;
+      const rebase = () => {
+        const current = ports.read();
+        token = targetId ? ports.readTarget?.(targetId) : null;
+        domainRevision = domain ? current.domainRevisions?.[domain] : null;
+      };
+      const nestedIds = new Set();
+      const context = { origin: request.origin, signal: controller.signal,
+        check() {
+          controller.signal.throwIfAborted();
+          const current = ports.read();
+          if (!same(current.host, before.host) || (domain && current.domainRevisions?.[domain] !== domainRevision) || (targetId && ports.readTarget?.(targetId) !== token)) fail('STALE_TARGET', 'The target or its authored domain changed while the job was running.');
+        },
+        commit(apply) {
+          context.check();
+          if (!domain) fail('INVALID_ARGUMENT', 'A committing job must declare its domain.');
+          const recorded = ports.recordAction(domain, apply, targetId ?? null);
+          if (recorded?.then) fail('INVALID_ARGUMENT', 'Job publication must be synchronous; prepare before commit.');
+          committedHistoryId = recorded.historyEntryId; applied ||= Boolean(committedHistoryId);
+          if (job) rebase();
+          return recorded.result;
+        },
+        run(nestedId, nestedArgs = {}) {
+          if (job) context.check(); else controller.signal.throwIfAborted();
+          const nested = registry.prepare(nestedId, nestedArgs); exposure(nested.entry, nested.args, request);
+          const invoke = () => registry.invoke(nested.entry, nested.args, context);
+          const value = nested.entry.kind === 'mutation' ? ports.recordAction(nested.entry.undoDomain, invoke, nested.args.characterId ?? null, true) : { result: invoke() };
+          // Only the synchronous owned step may advance the fence. Never absorb
+          // an external edit while an asynchronous nested step is suspended;
+          // its later publication must itself use context.run/commit.
+          if (job) rebase();
+          return mapResult(value, recorded => mapResult(recorded.result, result => {
+            if (job) { context.check(); rebase(); applied ||= Boolean(recorded.historyEntryId); }
+            for (const target of result.affectedIds) nestedIds.add(target);
+            return result;
+          }));
+        },
+      };
+      if (entry.kind === 'job') { job = { id: crypto.randomUUID(), host: before.host, controller, background: false }; jobs.set(job.id, job); }
+      timer = (ports.setTimeout ?? setTimeout)(() => {
+        const error = new StudioProtocolError('TIMEOUT', `${entry.id} exceeded its deadline.`);
+        controller.abort(error);
+      }, job && entry.background === true ? 300_000 : entry.timeoutMs ?? 30_000);
+      // The race observes expiry even if a backend ignores cancellation.
+      const invoke = () => {
+        const value = registry.invoke(entry, validated, context);
+        if (!value?.then) return value;
+        const deadline = new Promise((_, reject) => controller.signal.addEventListener('abort', () => reject(controller.signal.reason), { once: true }));
+        return Promise.race([value, deadline]);
+      };
+      const value = entry.kind === 'mutation' ? ports.recordAction(entry.undoDomain, invoke, validated.characterId ?? null) : { result: invoke(), historyEntryId: null };
+      const finish = ({ result, historyEntryId }) => mapResult(result, output => {
+        clearTimer();
+        releaseToasts?.(); releaseToasts = null;
+        const refused = toastRefusal();
+        if (refused) throw refused;
+        return remember(receipt(entry, request, before, { ...output, affectedIds: [...new Set([...output.affectedIds, ...nestedIds])] }, historyEntryId ?? committedHistoryId, toasts));
+      });
+      const finished = value?.then ? value.then(finish) : finish(value);
+      const answer = finished?.then ? finished.catch(rejected) : finished;
+      if (job) {
+        job.completion = Promise.resolve(answer).then(outcome => { job.outcome = outcome; emit({ type: 'job.completed', jobId: job.id, receipt: outcome }); return outcome; });
+        const detach = () => {
+          job.background = true;
+          const current = ports.read();
+          return journal.record(validateReceipt({ ok: true, commandId: request.commandId, receiptId: crypto.randomUUID(), host: before.host,
+            action: entry.id, status: 'started', kind: 'job', jobId: job.id, authored: false, revision: { before: current.revision, after: current.revision },
+            affectedIds: [], delta: [], checks: { coverage: `studio-action:${entry.id}` }, warnings: [], undo: null }));
+        };
+        if (answer?.then && request.wait === false) return detach();
+        if (answer?.then && entry.background === true) {
+          const foreground = Promise.race([job.completion, new Promise(resolve => {
+            foregroundTimer = (ports.setTimeout ?? setTimeout)(() => resolve(detach()), entry.timeoutMs ?? 30_000);
+          })]).finally(() => pending.delete(request.commandId));
+          pending.set(request.commandId, foreground);
+          return foreground;
+        }
+      }
+      if (answer?.then) { const settled = (job?.completion ?? answer).finally(() => pending.delete(request.commandId)); pending.set(request.commandId, settled); return settled; }
+      return answer;
+    } catch (error) { return rejected(error); }
+  }
+  function run(...args) {
+    activeRunDepth++;
+    try {
+      const value = executeRun(...args);
+      if (value?.then) return value.finally(() => { activeRunDepth--; });
+      activeRunDepth--;
+      return value;
+    } catch (error) {
+      activeRunDepth--;
+      throw error;
+    }
+  }
+  // Trusted UI proposals retain native pre-images until applied once or
+  // discarded. Ordinary committed command receipts keep their history rule.
+  function beginPreview(commands) {
+    if (preview || transactions.size) fail('TARGET_BUSY', 'Finish the open scene transaction first.');
+    if (!Array.isArray(commands) || !commands.length || commands.length > 32) fail('INVALID_ARGUMENT', 'A preview needs 1–32 admitted proposal commands.');
+    const prepared = commands.map(command => {
+      if (!previewCommands.has(command?.id)) fail('INVALID_ARGUMENT', 'This command cannot be previewed.');
+      const value = registry.prepare(command.id, command.args);
+      if (value.entry.kind !== 'mutation') fail('INVALID_ARGUMENT', 'A preview cannot start a job or call a model.');
+      exposure(value.entry, value.args, { origin: 'ui' }); return value;
+    });
+    const before = ports.read(), controller = new AbortController();
+    const session = ports.beginAction(prepared[0].entry.undoDomain, prepared[0].args.characterId ?? null);
+    let closed = false;
+    const check = () => { controller.signal.throwIfAborted(); if (!same(before.host, ports.read().host)) fail('STALE_SCENE', 'The preview belongs to the previous scene.'); };
+    const discard = () => { if (closed) return false; closed = true; preview = null; controller.abort();
+      return session.cancel({ restore: same(before.host, ports.read().host) }); };
+    const owned = { discard, apply() {
+      if (closed) fail('STALE_TARGET', 'The preview has ended.');
+      try { check(); const result = session.commit(); closed = true; preview = null; return result; }
+      catch (error) { discard(); throw error; }
+    } };
+    preview = owned; activeRunDepth++;
+    try {
+      session.run(() => {
+        for (const { entry, args } of prepared) {
+          check(); const prior = ports.read().revision, shown = [];
+          const release = ports.captureToasts?.(toast => shown.push(typeof toast === 'string' ? toast : toast.message));
+          try {
+            const result = ports.recordAction(entry.undoDomain, () => registry.invoke(entry, args,
+              { origin: 'ui', signal: controller.signal, check }), args.characterId ?? null, true);
+            if (result?.then || result?.result?.then) fail('INVALID_ARGUMENT', 'Preview commands must finish synchronously.');
+            if (shown.length && ports.read().revision === prior) fail('TARGET_NOT_READY', shown.at(-1));
+          } finally { release?.(); }
+        }
+      });
+      return owned;
+    } catch (error) { discard(); throw error; }
+    finally { activeRunDepth--; }
+  }
+  return { run, beginPreview,
+    // Trusted UI adapter only: wire callers can consume, never mint a token.
+    confirm(id, args = {}) { const prepared = registry.prepare(id, args), token = crypto.randomUUID(); confirmations.set(token, { id, args: prepared.args, host: ports.read().host, expires: (ports.now ?? Date.now)() + 300_000 }); return token; },
+    subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); },
+    dispose() { preview?.discard(); for (const tx of transactions.values()) cancelTransaction(tx); for (const job of jobs.values()) if (!job.outcome) job.controller.abort(new StudioProtocolError('CANCELLED', 'Studio closed.')); listeners.clear(); } };
+}

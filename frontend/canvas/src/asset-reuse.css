@@ -1,0 +1,29 @@
+/* 素材复用弹窗（asset-reuse.js）：两列选择 / 汇总 / 逐镜预览 / 问题清单。
+   配色优先跟随全局变量，缺省退回系统色以兼顾明暗主题；圆角与现有面板一致。 */
+.ar { display: flex; flex-direction: column; gap: 10px; width: min(880px, 92vw); }
+.ar-head h3 { margin: 0 0 4px; }
+.ar-head .hint { margin: 0; }
+.ar-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ar-col { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--line, #d8dbe2); border-radius: 12px; padding: 10px; background: var(--panel, Canvas); }
+.ar-col-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.ar-col-head b { margin-right: auto; }
+.ar-search { flex: 1; min-width: 140px; }
+.ar-list { display: flex; flex-direction: column; gap: 2px; overflow: auto; max-height: 320px; }
+.ar-item { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 8px; }
+.ar-item:hover { background: var(--hover, rgba(128, 128, 128, .10)); }
+.ar-item-off { opacity: .55; }
+.ar-pick { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; cursor: pointer; }
+.ar-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ar-thumb { flex: 0 0 38px; width: 38px; height: 38px; display: grid; place-items: center; background: var(--hover, rgba(128,128,128,.1)); border-radius: 8px; overflow: hidden; font-size: 11px; color: var(--dim); }
+.ar-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.ar-item > select { max-width: 88px; }
+.ar-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ar-summary { font-size: 12px; opacity: .85; }
+.ar-mode { gap: 6px; }
+.ar-preview { border: 1px solid var(--line, #d8dbe2); border-radius: 12px; padding: 8px 12px; max-height: 200px; overflow: auto; background: var(--panel, Canvas); }
+.ar-lines { display: flex; flex-direction: column; gap: 3px; }
+.ar-line { display: flex; align-items: baseline; gap: 10px; font-size: 12px; }
+.ar-line-title { font-weight: 600; max-width: 38%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ar-line-detail { opacity: .8; }
+.ar-problems { margin-top: 6px; font-size: 12px; color: var(--err, #c0392b); }
+@media (max-width: 760px) { .ar-cols { grid-template-columns: 1fr; } }

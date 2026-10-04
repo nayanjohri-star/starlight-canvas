@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createStore} from '../src/store.js';
+import {createMemoryStorage} from '../src/storage.js';
+import {createAssets} from '../src/assets.js';
+import {setCapabilities} from '../src/capabilities.js';
+const stub=()=>({append(){},remove(){},setAttribute(){},style:{}});
+globalThis.document={createElement:stub,getElementById:()=>null};
+setCapabilities({models:{},upload_limits:{image:{content_types:['image/png'],max_mib:30}}});
+test('独立复审：删除文件期间换项目，旧项目的外部新稿不得被盲写覆盖',async()=>{
+ const storage=createMemoryStorage(),store=createStore(storage);await store.newProject('原项目');
+ const assets=createAssets({store,storage,api:{}});
+ const a=await assets.registerBlob(new Blob(['a'],{type:'image/png'}),'a.png','image');
+ const pid=store.project.id;await store.flush();const del=storage.delBlob.bind(storage);
+ storage.delBlob=async k=>{await del(k);await store.newProject('新项目');const latest=await storage.get(`project:${pid}`);latest.nodes.push({id:'external-draft',type:'note',x:1,y:1,data:{text:'他人的新稿'}});latest.rev++;await storage.set(`project:${pid}`,latest);};
+ assert.equal(await assets.removeAsset(a.id),true);
+ const saved=await storage.get(`project:${pid}`);
+ assert.ok(saved.nodes.some(n=>n.id==='external-draft'),'删除补落盘只能合并素材变化，不得写回整个旧项目');
+ assert.equal(saved.assets[a.id],undefined,'删除结果同时持久化');
+ assert.equal(store.project.name,'新项目');await store.flush();
+});

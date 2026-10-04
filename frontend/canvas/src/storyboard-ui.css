@@ -1,0 +1,99 @@
+/* ===== 分镜表模块视图层（storyboard.js）=====
+   作用域：仅 .sb* 模块类与分镜各弹窗容器类；不写全局根变量/壳规则，无 !important。
+   颜色全部取自 app.css 主题 token（--panel/--panel2/--line/--text/--dim/--accent），黑白双主题通用。
+   模态框几何（宽高/外层滚动）由 .modal / .modal-wide 全局规则约束，本层只排版内部并保持操作区可达。 */
+
+/* ---------- 顶栏：标题 + 数量 + 主要行动 ---------- */
+.sb { gap: 12px; }
+.sb-head { flex: none; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; padding-right: 30px; }
+.sb-head-main { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.sb-title { margin: 0; font-size: 16px; font-weight: 600; white-space: nowrap; }
+.sb-count { color: var(--dim); font-size: 12px; white-space: nowrap; }
+.sb-head-actions { flex-wrap: nowrap; }
+.sb-head-actions select { width: auto; }
+.sb-head-actions .primary { white-space: nowrap; }
+
+/* ---------- 低频操作折叠区：导入 / AI 拆分 / 导出 ---------- */
+.sb-tools { flex: none; border: 1px solid var(--line); border-radius: 14px; background: var(--panel2); padding: 0 14px; }
+.sb-tools > summary { cursor: pointer; padding: 8px 0; color: var(--dim); font-size: 12px; }
+.sb-tools > summary:hover { color: var(--text); }
+.sb-tools[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.sb-tools-body { padding: 2px 0 10px; }
+
+/* ---------- 剧本折叠区 ---------- */
+.sb-script { flex: none; border: 1px solid var(--line); border-radius: 14px; background: var(--panel2); padding: 0 14px; }
+.sb-script > summary { padding: 8px 0; margin-bottom: 0; }
+.sb-script[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.sb-script textarea { margin-top: 2px; }
+.sb-script-meta { color: var(--dim); font-size: 11px; padding: 2px 0 8px; }
+.sb-tools > summary:focus-visible, .sb-script > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 4px; }
+
+/* ---------- 分镜网格与卡片 ---------- */
+.sb-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.sb-grid:empty { display: none; }
+.sb-card { padding: 0; gap: 0; overflow: hidden; border-radius: 18px; box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 7%, transparent); transition: border-color .15s ease, box-shadow .15s ease; }
+.sb-card:hover { border-color: var(--accent); }
+.sb-card:has(.sb-check input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 1px 2px color-mix(in srgb, var(--text) 7%, transparent); }
+.sb-card:has(.sb-check input:checked) .sb-check { border-color: var(--accent); }
+.sb-card-top { position: relative; }
+.sb-thumb { height: 140px; border-radius: 0; background: var(--panel2); }
+.sb-check { position: absolute; top: 8px; left: 8px; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin: 0; border-radius: 8px; background: color-mix(in srgb, var(--panel) 84%, transparent); border: 1px solid var(--line); cursor: pointer; }
+.sb-check input { width: 14px; height: 14px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.sb-dur { position: absolute; top: 8px; right: 8px; padding: 1px 8px; border-radius: 99px; background: color-mix(in srgb, var(--panel) 84%, transparent); border: 1px solid var(--line); font-size: 11px; color: var(--text); }
+.sb-card-main { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 2px; min-width: 0; }
+.sb-card-title { min-width: 0; }
+.sb-card-title b { display: block; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-badges { gap: 4px; }
+.sb-card-desc { min-height: 17px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.sb-card-actions { flex-wrap: nowrap; gap: 6px; padding: 8px 10px 10px; margin-top: auto; }
+.sb-card-actions .mini { flex: 1 1 0; padding: 4px 6px; white-space: nowrap; }
+.sb-card-actions .mini:last-child { flex: 0 0 auto; min-width: 30px; }
+
+/* ---------- 空态：一条主引导 ---------- */
+.sb-empty { flex: 1; min-height: 240px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; border: 1px dashed var(--line); border-radius: 20px; padding: 32px 24px; text-align: center; }
+.sb-empty-title { font-size: 15px; font-weight: 600; }
+.sb-empty .hint { margin: 0; max-width: 420px; }
+.sb-empty .primary { padding: 8px 18px; }
+
+/* ---------- 编辑弹窗：12 字段分区（基本 / 画面 / 镜头 / 声音）---------- */
+.sb-edit { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.sb-edit h3 { flex: none; }
+.sb-edit .sb-form { display: flex; flex-direction: column; gap: 16px; flex: 1; min-height: 0; overflow-y: auto; padding: 2px 6px 4px 2px; }
+.sb-sec { display: flex; flex-direction: column; gap: 8px; }
+.sb-sec-title { font-size: 12px; font-weight: 600; color: var(--dim); border-bottom: 1px solid var(--line); padding-bottom: 5px; letter-spacing: .02em; }
+.sb-sec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px 14px; }
+.sb-sec-grid .field { margin: 0; min-width: 0; }
+.sb-sec-grid .field-area { grid-column: 1 / -1; }
+.sb-edit .field-area textarea { min-height: 54px; }
+.sb-edit .modal-actions { flex: none; margin-top: 10px; }
+
+/* ---------- 分镜素材选择弹窗 ---------- */
+.sb-assets { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 10px; }
+.sb-assets h3 { flex: none; margin: 0 0 2px; }
+.sb-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding-right: 6px; }
+.sb-asset-cat h4 { margin: 0 0 6px; font-size: 12px; font-weight: 600; color: var(--dim); }
+.sb-asset-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 2px 12px; }
+.sb-asset { flex-wrap: nowrap; padding: 5px 8px; border-radius: 10px; min-width: 0; }
+.sb-asset:hover { background: var(--panel2); }
+.sb-asset input { flex: none; }
+.sb-asset-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-wire { flex: none; flex-wrap: nowrap; border-top: 1px solid var(--line); padding-top: 8px; }
+.sb-wire input { flex: none; }
+.sb-assets .modal-actions { flex: none; margin-top: 2px; }
+
+/* ---------- 更多操作 / 版本历史 / 导入 / AI 拆分 ---------- */
+.sb-more { display: flex; flex-direction: column; gap: 2px; min-width: 250px; }
+.sb-more h3 { margin-bottom: 6px; }
+.sb-more-item > button { width: 100%; text-align: left; padding: 7px 10px; border-color: transparent; background: transparent; border-radius: 10px; }
+.sb-more-item > button:hover { background: var(--panel2); border-color: var(--line); }
+.sb-versions { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; }
+.sb-ver { flex-wrap: nowrap; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.sb-ver:last-child { border-bottom: 0; }
+.sb-ver span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.sb-import, .sb-ai { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 10px; overflow-y: auto; }
+.sb-import > .hint, .sb-ai > .hint { margin: 0; }
+.sb-import-mode { flex-wrap: nowrap; }
+.sb-import-mode select { width: auto; }
+.sb-ai-count { flex-wrap: nowrap; }
+.sb-ai-count input { width: 90px; flex: none; }
+.sb-import .modal-actions, .sb-ai .modal-actions { margin-top: auto; }

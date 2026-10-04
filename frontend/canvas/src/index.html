@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>星光智能画布</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script src="theme.js"></script>
+<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="desktop-shell.css">
+<link rel="stylesheet" href="module-ui.css">
+<link rel="stylesheet" href="asset-reuse.css">
+<link rel="stylesheet" href="script-import.css">
+<link rel="stylesheet" href="board-performance.css">
+<link rel="stylesheet" href="node-composer.css">
+</head>
+<body>
+<header id="topbar">
+  <div class="h-left">
+    <span class="brand-lockup">
+      <span class="brand-mark" aria-hidden="true">星</span>
+      <span class="brand">星光智能画布</span>
+      <span id="build-badge" class="build-badge" aria-label="构建版本"></span>
+    </span>
+    <select id="project-list" title="切换项目"></select>
+    <button id="btn-project-menu" type="button" aria-haspopup="menu" aria-expanded="false" title="项目操作">项目 ▾</button>
+    <div id="project-menu-home" hidden>
+      <div class="menu-pop" role="menu" aria-label="项目操作"></div>
+    </div>
+    <button id="btn-new-project" type="button">新建</button>
+    <button id="btn-rename" type="button">重命名</button>
+    <button id="btn-hub" type="button" title="项目版本与模板">版本</button>
+    <button id="btn-workspace" type="button" title="账户项目备份与成员管理">工作区</button>
+    <button id="btn-import" type="button">导入</button>
+  </div>
+  <nav class="h-mid seg" aria-label="工作模式">
+    <span class="seg-item is-on" aria-current="page">画布</span>
+    <button id="btn-storyboard" type="button" title="分镜脚本与镜头表">分镜</button>
+    <button id="btn-director-mode" type="button" title="打开项目导演台">导演台</button>
+    <button id="btn-timeline" type="button" title="时间轴剪辑与导出">剪辑</button>
+  </nav>
+  <div class="h-right">
+    <button id="btn-assistant" type="button" title="画布助手（提案须确认后执行）">助手</button>
+    <button id="btn-export" type="button" title="导出项目文件">导出</button>
+    <div id="theme-switch" class="theme-switch" role="group" aria-label="画布主题">
+      <button type="button" data-theme-option="dark" aria-pressed="true">黑色</button>
+      <button type="button" data-theme-option="light" aria-pressed="false">白色</button>
+    </div>
+    <button id="btn-key" type="button" class="key-btn">账户</button>
+  </div>
+</header>
+<div id="service-banner" class="service-banner" role="status" hidden></div>
+<div id="workarea">
+  <main id="board-wrap">
+    <div id="canvas-toolbar" role="toolbar" aria-label="画布操作">
+      <button id="btn-undo" type="button" title="撤销 (Ctrl+Z)">撤销</button>
+      <button id="btn-redo" type="button" title="重做 (Ctrl+Shift+Z / Ctrl+Y)">重做</button>
+      <span class="tb-sep"></span>
+      <button id="btn-copy" type="button" title="复制选中 (Ctrl+C)">复制</button>
+      <button id="btn-paste" type="button" title="粘贴 (Ctrl+V)">粘贴</button>
+      <button id="btn-dup" type="button" title="创建副本 (Ctrl+D)">副本</button>
+      <button id="btn-del-sel" type="button" title="删除选中 (Delete)">删除</button>
+      <span class="tb-sep"></span>
+      <button id="btn-group" type="button" title="成组 (Ctrl+G)">成组</button>
+      <button id="btn-ungroup" type="button" title="解散分组 (Ctrl+Shift+G)">散组</button>
+      <button id="btn-lock" type="button" title="锁定/解锁 (Ctrl+L)">锁定</button>
+      <button id="btn-arrange" type="button" title="网格排列选中节点">排列</button>
+      <span class="tb-sep"></span>
+      <button id="btn-snap" type="button" aria-pressed="true" title="拖动时对齐节点，松手时对齐网格">吸附</button>
+      <button id="btn-zoom-out" type="button" title="缩小">－</button>
+      <button id="btn-zoom-in" type="button" title="放大">＋</button>
+      <button id="btn-fit" type="button" title="适配全部节点 (F)">适配</button>
+      <button id="btn-minimap" type="button" aria-pressed="true" title="缩略图显示开关">地图</button>
+      <span class="tb-sep"></span>
+      <input id="node-search" type="text" placeholder="搜索节点（/）" autocomplete="off">
+      <span class="tb-sep"></span>
+      <button id="btn-left-panel" type="button" aria-pressed="true" title="左侧创作面板">面板</button>
+      <button id="btn-right-panel" type="button" aria-pressed="true" title="右侧检查器（关闭后可在此重开）">检查器</button>
+    </div>
+    <div id="board"><svg id="edges"></svg><div id="nodes"></div></div>
+    <div id="empty-state" class="hidden"></div>
+    <div id="statusbar" class="statusbar"></div>
+    <aside id="sidebar">
+      <section class="panel" data-dock="create">
+        <h2>创建</h2>
+        <input id="create-search" type="text" placeholder="搜索节点与模板" autocomplete="off">
+        <div class="cg">
+          <h3 class="cg-t">资源</h3>
+          <button id="btn-add-asset" type="button" class="mini">上传素材</button>
+          <p class="hint">素材入库后可拖上画布生成素材节点；也可把文件直接拖进画布。</p>
+        </div>
+        <div class="cg">
+          <h3 class="cg-t">生成</h3>
+          <div class="palette">
+            <button data-add-node="text" type="button">＋ 文本 / 剧本</button>
+            <button data-add-node="image" type="button">＋ 图片生成</button>
+            <button data-add-node="gen" type="button">＋ 视频生成</button>
+            <button data-add-node="director" type="button">＋ 导演台</button>
+            <button data-add-node="note" type="button">＋ 便签</button>
+          </div>
+        </div>
+        <div class="cg">
+          <h3 class="cg-t">工具</h3>
+          <div class="palette">
+            <button data-add-node="utility" type="button">＋ 工具</button>
+          </div>
+          <div id="tpl-list" class="palette tpl-list"></div>
+        </div>
+        <p class="hint">双击或右键画布空白处也可添加节点。</p>
+      </section>
+      <section class="panel" data-dock="asset">
+        <h2>素材 <button id="btn-library" type="button" class="mini" title="素材库管理">素材库</button></h2>
+        <div id="asset-list" class="asset-list"></div>
+        <p class="hint">拖到画布生成素材节点；也可把文件直接拖进画布。</p>
+      </section>
+      <section class="panel" data-dock="run">
+        <h2>工作流</h2>
+        <div id="workflow-panel"></div>
+      </section>
+      <section class="panel" data-dock="task">
+        <h2>任务</h2>
+        <div id="task-list" class="task-list"></div>
+      </section>
+    </aside>
+    <div class="panel-resizer" id="sidebar-resizer" title="拖动调整宽度 · 双击折叠"></div>
+  </main>
+  <div class="panel-resizer" id="inspector-resizer" title="拖动调整宽度 · 双击折叠"></div>
+  <aside id="inspector"><div class="inspector-empty">选中节点查看/编辑参数</div></aside>
+</div>
+<div id="overlay-root"></div>
+<div id="toast-root"></div>
+<script type="module" src="main.js"></script>
+</body>
+</html>

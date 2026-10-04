@@ -1,0 +1,18 @@
+@import url('storyboard-ui.css');
+@import url('library-ui.css');
+@import url('timeline-ui.css');
+
+/* ===== 模块共享 V2 几何细则 =====
+   仅补几何、不改色彩：模块内字段统一 10px 圆角；卡片/工具行/弹窗操作区内的短按钮胶囊化。
+   作用域限定各模块容器类，不写根变量/壳规则；宽菜单项（.sb-more-item）保持模块表内的 10px。 */
+
+:is(.sb-edit, .tl-inspector) .field :is(input, select, textarea),
+:is(.sb-script, .sb-import, .sb-ai) textarea,
+:is(.sb-head-actions, .sb-tools-body, .sb-import-mode, .sb-ai-count, .lib-bar, .lib-flags, .lib-editor, .tl-head-r, .tl-tools) :is(input, select, textarea) {
+  border-radius: 10px;
+}
+
+:is(.sb-head-actions, .sb-card-actions, .sb-tools-body, .sb-empty, .sb-ver, .lib-head-actions, .lib-bar, .lib-flags, .lib-col-acts, .lib-acts, .lib-empty, .tl-head-r, .tl-tools, .tl-transport, .tl-ins-actions, .tl-menu, .tl-empty-card) button,
+:is(.sb-edit, .sb-assets, .sb-import, .sb-ai, .sb-more, .lib-editor) .modal-actions button {
+  border-radius: 999px;
+}

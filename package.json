@@ -1,0 +1,23 @@
+{
+  "name": "xingpan-smart-canvas",
+  "version": "0.5.0-beta.1",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-or-later",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "setup": "npm ci --prefix frontend/director && npm ci --prefix frontend/canvas",
+    "build": "npm run build --prefix frontend/canvas",
+    "start": "npm start --prefix frontend/canvas",
+    "test": "npm test --prefix frontend/canvas",
+    "test:e2e": "npm run test:e2e --prefix frontend/canvas"
+  },
+  "description": "StarPan node canvas for prompts, reference assets, image and video workflows",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nayanjohri-star/starlight-canvas.git"
+  },
+  "homepage": "https://xingpan.site"
+}

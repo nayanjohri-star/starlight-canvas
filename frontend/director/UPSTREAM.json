@@ -1,0 +1,14 @@
+{
+  "name": "CozyClay",
+  "version": "1.10.0",
+  "repository": "https://github.com/NomaDamas/CozyClay",
+  "commit": "4226099b42958b9d76ef390aa067d2449d3c2994",
+  "license": "AGPL-3.0-or-later",
+  "retrieved": "2026-09-30",
+  "retained": ["src", "tools", "test", "LICENSES", "public/fonts", "public/ardy", "public/scenes", "package.json", "package-lock.json", "LICENSE", "LICENSING.md", "THIRD_PARTY_NOTICES.md", "THIRD_PARTY_NOTICES_VIBE_WORKFLOW.md", "README.md", "DESIGN.md"],
+  "excluded": ["public/models (Mixamo raw files are not licensed for redistribution)", "public/demo", "public/media", "hosted marketing pages", "upstream repository administration instructions"],
+  "referenceOnly": {
+    "iFrame": { "repository": "https://github.com/locopepe2024/iframe", "commit": "7a85c231c0d13a8842b51a795b1aa1bc20345ccf", "license": "MIT", "codeReused": false },
+    "MiniMax": { "version": "0.24.10", "codeOrAssetsReused": false }
+  }
+}

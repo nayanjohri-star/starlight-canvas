@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const baseline = JSON.parse(readFileSync(new URL('./baseline.json', import.meta.url), 'utf8'));
+assert.deepEqual(Object.keys(baseline.writers).filter(key => key.startsWith('domains/stage.js::')), [], 'stage writer references must leave the ratchet baseline');
+const { coverageMetrics } = await import('./verify-parity-matrix.mjs');
+const measured = coverageMetrics();
+assert.ok(measured.writerReferences < 243, 'writer references decrease from origin/main');
+assert.ok(measured.handlerSites >= 3 + 8, 'the eight stage panel handlers reach run, measured from source');
+assert.equal(baseline.coverage.writerReferences, measured.writerReferences);
+assert.ok(measured.handlerSites >= baseline.coverage.handlerSites, 'other owned domains may add handler sites above the committed floor');
+console.log('PASS stage ratchet: owned-stage entries removed; writer and handler metrics measured, not hand-set');

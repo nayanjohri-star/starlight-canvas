@@ -1,0 +1,19 @@
+/* ===== 大画布性能层 =====
+   仅当节点数 ≥40 时 board.js 给 #nodes 加 .perf-on——以下规则小画布完全不命中，零行为差异。
+
+   1) 常规缩放视口外：.node-body content-visibility:auto，浏览器自动跳过视口外正文子树的
+      布局与绘制；contain-intrinsic-size:auto 让浏览器记住上次实测高（board.js 另按节点写入
+      内联 `auto Npx` 种子），节点总高稳定 → 端口行（body 的兄弟节点）与连线锚点不偏移。
+      DOM 与输入值始终保留，媒体元素不重挂载。
+   2) 低缩放概览 .lite：正文子树 display:none 彻底跳过布局；body 高度由 JS 写入的内联
+      min-height 保持（= 折叠前实测高），节点头与端口照常挂载可见，连线 / 框选 / 命中几何
+      全部不变。子元素仍挂在 DOM 中——未保存输入、任务进度与媒体状态原样保留，
+      恢复仅摘 class，不发生重挂载。 */
+
+#nodes.perf-on .node { contain: layout style; }
+#nodes.perf-on .node.vis-off .node-body { content-visibility: auto; }
+#nodes.perf-on .node.lite { box-shadow: none; }
+#nodes.perf-on .node.lite .node-body > * { display: none; }
+
+/* 平移手势期间：节点层与连线层独立合成，只改 transform 不重绘内容（board.js 在手势开始/结束时切换 .panning） */
+.panning #edges { will-change: transform; }

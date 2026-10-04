@@ -1,0 +1,463 @@
+{
+  "version": "2026-09-18.1",
+  "models": {
+    "seedance-2.5-vip-480p": {
+      "family": "sd25",
+      "resolution": "480p",
+      "min_seconds": 4,
+      "max_seconds": 30,
+      "default_seconds": 4,
+      "ratios": [
+        "16:9",
+        "9:16",
+        "1:1",
+        "4:3",
+        "3:4",
+        "21:9"
+      ],
+      "default_ratio": "16:9",
+      "modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "max_reference_images": 30,
+      "max_reference_videos": 10,
+      "max_reference_audios": 10,
+      "max_reference_media": 50,
+      "supports_generate_audio": true,
+      "supports_face_mode": true,
+      "prompt_max_characters": 60000,
+      "billing_unit": "second"
+    },
+    "seedance-2.5-vip-720p": {
+      "family": "sd25",
+      "resolution": "720p",
+      "min_seconds": 4,
+      "max_seconds": 30,
+      "default_seconds": 4,
+      "ratios": [
+        "16:9",
+        "9:16",
+        "1:1",
+        "4:3",
+        "3:4",
+        "21:9"
+      ],
+      "default_ratio": "16:9",
+      "modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "max_reference_images": 30,
+      "max_reference_videos": 10,
+      "max_reference_audios": 10,
+      "max_reference_media": 50,
+      "supports_generate_audio": true,
+      "supports_face_mode": true,
+      "prompt_max_characters": 60000,
+      "billing_unit": "second"
+    },
+    "seedance-2.5-vip-1080p": {
+      "family": "sd25",
+      "resolution": "1080p",
+      "min_seconds": 4,
+      "max_seconds": 30,
+      "default_seconds": 4,
+      "ratios": [
+        "16:9",
+        "9:16",
+        "1:1"
+      ],
+      "default_ratio": "16:9",
+      "modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "max_reference_images": 30,
+      "max_reference_videos": 10,
+      "max_reference_audios": 10,
+      "max_reference_media": 50,
+      "supports_generate_audio": true,
+      "supports_face_mode": true,
+      "prompt_max_characters": 60000,
+      "billing_unit": "second"
+    },
+    "seedance-2.5-discount-480p": {
+      "family": "sd25",
+      "resolution": "480p",
+      "min_seconds": 4,
+      "max_seconds": 30,
+      "default_seconds": 4,
+      "ratios": [
+        "16:9",
+        "9:16",
+        "1:1",
+        "4:3",
+        "3:4",
+        "21:9"
+      ],
+      "default_ratio": "16:9",
+      "modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "max_reference_images": 30,
+      "max_reference_videos": 10,
+      "max_reference_audios": 10,
+      "max_reference_media": 50,
+      "supports_generate_audio": true,
+      "supports_face_mode": true,
+      "prompt_max_characters": 5000,
+      "billing_unit": "second"
+    },
+    "seedance-2.5-discount-720p": {
+      "family": "sd25",
+      "resolution": "720p",
+      "min_seconds": 4,
+      "max_seconds": 30,
+      "default_seconds": 4,
+      "ratios": [
+        "16:9",
+        "9:16",
+        "1:1",
+        "4:3",
+        "3:4",
+        "21:9"
+      ],
+      "default_ratio": "16:9",
+      "modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "max_reference_images": 30,
+      "max_reference_videos": 10,
+      "max_reference_audios": 10,
+      "max_reference_media": 50,
+      "supports_generate_audio": true,
+      "supports_face_mode": true,
+      "prompt_max_characters": 5000,
+      "billing_unit": "second"
+    },
+    "seedance-2.5-special-480p": {
+      "family": "sd25",
+      "resolution": "480p",
+      "min_seconds": 4,
+      "max_seconds": 30,
+      "default_seconds": 4,
+      "ratios": [
+        "16:9",
+        "9:16"
+      ],
+      "default_ratio": "16:9",
+      "modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "max_reference_images": 30,
+      "max_reference_videos": 9,
+      "max_reference_audios": 9,
+      "max_reference_media": 48,
+      "supports_generate_audio": false,
+      "supports_face_mode": false,
+      "prompt_max_characters": 5000,
+      "billing_unit": "second"
+    },
+    "seedance-2.5-special-720p": {
+      "family": "sd25",
+      "resolution": "720p",
+      "min_seconds": 4,
+      "max_seconds": 30,
+      "default_seconds": 4,
+      "ratios": [
+        "16:9",
+        "9:16"
+      ],
+      "default_ratio": "16:9",
+      "modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "max_reference_images": 30,
+      "max_reference_videos": 9,
+      "max_reference_audios": 9,
+      "max_reference_media": 48,
+      "supports_generate_audio": false,
+      "supports_face_mode": false,
+      "prompt_max_characters": 5000,
+      "billing_unit": "second"
+    },
+    "wan-3.0": {
+      "family": "wan",
+      "resolution": "1080p",
+      "min_seconds": 5,
+      "max_seconds": 30,
+      "default_seconds": 5,
+      "ratios": [
+        "16:9",
+        "9:16",
+        "1:1",
+        "4:3",
+        "3:4"
+      ],
+      "default_ratio": "16:9",
+      "modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference"
+      ],
+      "max_reference_images": 10,
+      "max_reference_videos": 5,
+      "max_reference_audios": 5,
+      "max_reference_media": 20,
+      "supports_generate_audio": true,
+      "supports_face_mode": false,
+      "prompt_max_characters": 32000,
+      "billing_unit": "second"
+    },
+    "wan-3.0-prime": {
+      "family": "wan",
+      "resolution": "1080p",
+      "min_seconds": 5,
+      "max_seconds": 30,
+      "default_seconds": 5,
+      "ratios": [
+        "16:9",
+        "9:16",
+        "1:1",
+        "4:3",
+        "3:4"
+      ],
+      "default_ratio": "16:9",
+      "modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference"
+      ],
+      "max_reference_images": 10,
+      "max_reference_videos": 5,
+      "max_reference_audios": 5,
+      "max_reference_media": 20,
+      "supports_generate_audio": true,
+      "supports_face_mode": false,
+      "prompt_max_characters": 32000,
+      "billing_unit": "second"
+    },
+    "minimax-h3-720p": {
+      "family": "h3",
+      "resolution": "720p",
+      "min_seconds": 5,
+      "max_seconds": 15,
+      "default_seconds": 15,
+      "ratios": [
+        "auto",
+        "16:9",
+        "9:16",
+        "1:1",
+        "4:3",
+        "3:4"
+      ],
+      "default_ratio": "16:9",
+      "modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "max_reference_images": 9,
+      "max_reference_videos": 3,
+      "max_reference_audios": 3,
+      "max_reference_media": 12,
+      "supports_generate_audio": false,
+      "supports_face_mode": false,
+      "prompt_max_characters": 60000,
+      "billing_unit": "request"
+    },
+    "minimax-h3-2k": {
+      "family": "h3",
+      "resolution": "2k",
+      "min_seconds": 5,
+      "max_seconds": 15,
+      "default_seconds": 15,
+      "ratios": [
+        "auto",
+        "16:9",
+        "9:16",
+        "1:1",
+        "4:3",
+        "3:4"
+      ],
+      "default_ratio": "16:9",
+      "modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "max_reference_images": 9,
+      "max_reference_videos": 3,
+      "max_reference_audios": 3,
+      "max_reference_media": 12,
+      "supports_generate_audio": false,
+      "supports_face_mode": false,
+      "prompt_max_characters": 60000,
+      "billing_unit": "request"
+    },
+    "minimax-h3-768p-per-second": {
+      "family": "h3",
+      "resolution": "768p",
+      "min_seconds": 4,
+      "max_seconds": 15,
+      "default_seconds": 15,
+      "ratios": [
+        "auto",
+        "16:9",
+        "9:16",
+        "1:1",
+        "4:3",
+        "3:4"
+      ],
+      "default_ratio": "16:9",
+      "modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "max_reference_images": 9,
+      "max_reference_videos": 3,
+      "max_reference_audios": 3,
+      "max_reference_media": 12,
+      "supports_generate_audio": false,
+      "supports_face_mode": false,
+      "prompt_max_characters": 60000,
+      "billing_unit": "second"
+    },
+    "minimax-h3-2k-per-second": {
+      "family": "h3",
+      "resolution": "2k",
+      "min_seconds": 4,
+      "max_seconds": 15,
+      "default_seconds": 15,
+      "ratios": [
+        "auto",
+        "16:9",
+        "9:16",
+        "1:1",
+        "4:3",
+        "3:4"
+      ],
+      "default_ratio": "16:9",
+      "modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "max_reference_images": 9,
+      "max_reference_videos": 3,
+      "max_reference_audios": 3,
+      "max_reference_media": 12,
+      "supports_generate_audio": false,
+      "supports_face_mode": false,
+      "prompt_max_characters": 60000,
+      "billing_unit": "second"
+    },
+    "minimax-h3-768p-limited": {
+      "family": "h3",
+      "resolution": "768p",
+      "min_seconds": 6,
+      "max_seconds": 15,
+      "default_seconds": 15,
+      "ratios": [
+        "16:9"
+      ],
+      "default_ratio": "16:9",
+      "modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference"
+      ],
+      "max_reference_images": 9,
+      "max_reference_videos": 0,
+      "max_reference_audios": 3,
+      "max_reference_media": 12,
+      "supports_generate_audio": false,
+      "supports_face_mode": false,
+      "prompt_max_characters": 7000,
+      "billing_unit": "request",
+      "allowed_seconds": [
+        6,
+        10,
+        15
+      ]
+    },
+    "minimax-h3-768p-full-slow": {
+      "family": "h3",
+      "resolution": "768p",
+      "min_seconds": 1,
+      "max_seconds": 15,
+      "default_seconds": 15,
+      "ratios": [
+        "auto",
+        "21:9",
+        "16:9",
+        "9:16",
+        "1:1",
+        "4:3",
+        "3:4"
+      ],
+      "default_ratio": "16:9",
+      "modes": [
+        "text_to_video",
+        "image_to_video",
+        "omni_reference",
+        "first_last_frame"
+      ],
+      "max_reference_images": 9,
+      "max_reference_videos": 3,
+      "max_reference_audios": 3,
+      "max_reference_media": 12,
+      "supports_generate_audio": false,
+      "supports_face_mode": false,
+      "prompt_max_characters": 7000,
+      "billing_unit": "second",
+      "supports_audio_only": true,
+      "supports_last_frame_only": true,
+      "media_max_bytes": {
+        "image": 30000000,
+        "video": 50000000,
+        "audio": 15000000
+      },
+      "media_content_types": {
+        "image": [
+          "image/png",
+          "image/jpeg",
+          "image/webp"
+        ],
+        "video": [
+          "video/mp4"
+        ],
+        "audio": [
+          "audio/mpeg",
+          "audio/wav",
+          "audio/x-wav",
+          "audio/mp4"
+        ]
+      }
+    }
+  }
+}

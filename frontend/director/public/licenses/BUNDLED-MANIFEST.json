@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "retrieved": "2026-10-01",
+  "components": [
+    {
+      "id": "typr-ts",
+      "repo": "fredli74/Typr.ts",
+      "ref": "master",
+      "licensePath": "LICENSE",
+      "embeddedFile": "typr.factory.js",
+      "copyright": "Copyright (c) 2016 Photopea",
+      "license": "MIT",
+      "licenseFilename": "typr-ts.LICENSE.txt",
+      "licenseBytes": 1075,
+      "licenseSha256": "44b8cdb76bb7adb8fb3ca23a63d4bbf32c2be201bae44106e712094e6cff42a7",
+      "officialGitBlob": "031dd5e15fcbef813db5a1bb2bb83177b201f369",
+      "officialGitBlobURL": "https://api.github.com/repos/fredli74/Typr.ts/git/blobs/031dd5e15fcbef813db5a1bb2bb83177b201f369",
+      "officialSourceURL": "https://github.com/fredli74/Typr.ts/blob/master/LICENSE",
+      "embeddedIn": {
+        "package": "troika-three-text",
+        "version": "0.52.5",
+        "npmGitHead": "2280cf77383163220912d6e07f69e25eb3505e68",
+        "file": "libs/typr.factory.js",
+        "fileSha256": "c8ebeafa3ff293318859f7f0a574883422d93dc4e463053192b0a08d3b796c58"
+      },
+      "scopeNote": "The shipped factory identifies the Typr.ts project but not an upstream revision; the official LICENSE blob is pinned as reviewed attribution, not a claim of the exact vendored source revision."
+    },
+    {
+      "id": "unicode-font-resolver-client",
+      "repo": "lojjic/unicode-font-resolver",
+      "ref": "974383af089e544f4ac4b0ba96b5f98891688e17",
+      "tag": "v1.0.2",
+      "licensePath": "LICENSE",
+      "embeddedFile": "unicode-font-resolver-client.factory.js",
+      "copyright": "Copyright (c) 2023 Jason Johnston",
+      "license": "MIT",
+      "licenseFilename": "unicode-font-resolver-client.LICENSE.txt",
+      "licenseBytes": 1071,
+      "licenseSha256": "fed5391ffef25b9262519659e301030945e6d82bd2ffab748e8e9c76af803602",
+      "officialGitBlob": "36d8ecfc891b9988cda28973b4ff194bbcd4f04d",
+      "officialGitBlobURL": "https://api.github.com/repos/lojjic/unicode-font-resolver/git/blobs/36d8ecfc891b9988cda28973b4ff194bbcd4f04d",
+      "officialSourceURL": "https://github.com/lojjic/unicode-font-resolver/blob/974383af089e544f4ac4b0ba96b5f98891688e17/LICENSE",
+      "embeddedIn": {
+        "package": "troika-three-text",
+        "version": "0.52.5",
+        "npmGitHead": "2280cf77383163220912d6e07f69e25eb3505e68",
+        "file": "libs/unicode-font-resolver-client.factory.js",
+        "fileSha256": "be2d7e0ff13052ade6bee91a05aa777c31dcef10193eabda060a5be967f38bbe"
+      },
+      "scopeNote": "The factory identifies client v1.0.2; license read from the v1.0.2 tag commit."
+    },
+    {
+      "id": "woff2otf",
+      "repo": "arty-name/woff2otf",
+      "license": "Apache-2.0",
+      "copyright": "Copyright 2012, Steffen Hanikel (https://github.com/hanikesn)",
+      "modificationNotice": "Modified by Artemy Tregubenko, 2014 (https://github.com/arty-name/woff2otf)",
+      "officialGitBlob": "bab309f3bce88306f6b45a91378bcdbe55112966",
+      "officialGitBlobURL": "https://api.github.com/repos/arty-name/woff2otf/git/blobs/bab309f3bce88306f6b45a91378bcdbe55112966",
+      "sourceFile": "woff2otf.js",
+      "sourceFileSha256": "017f50c75ff4047188d98207306d31512edf5c545c390c2a8e73848005cac66e",
+      "sourceFileBytes": 4489,
+      "noticeFilename": "woff2otf.NOTICE.txt",
+      "noticeSha256": "bff0cfe3e80fba7ea6798b35f459391c04f8aabf248af054e0cf8c0372695a18",
+      "noticeBytes": 774,
+      "licenseFilename": "woff2otf.LICENSE.txt",
+      "officialLicenseURL": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+      "licenseSha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "licenseBytes": 11358,
+      "embeddedIn": {
+        "package": "troika-three-text",
+        "version": "0.52.5",
+        "npmGitHead": "2280cf77383163220912d6e07f69e25eb3505e68",
+        "file": "libs/woff2otf.factory.js",
+        "fileSha256": "01034ca50d1380f8a0c5faf7996004bad9d50881bc7f15f68e7dd9f1514d7a75"
+      },
+      "scopeNote": "The factory declares a custom Apache2 woff2otf bundle with fflate; the reviewed official source notice blob is pinned. Its header does not identify the exact vendored woff2otf source revision. The separate fflate MIT component already has a lockfile notice."
+    }
+  ],
+  "noticesSha256": "499dc05c99ce3bfada1e1d0e14329ded26be386dbcd6e26b623765e2983a9d80"
+}

@@ -1,0 +1,120 @@
+{
+	"width": 832,
+	"height": 480,
+	"fovDeg": 34.32929554556859,
+	"fx": 777.0115884251717,
+	"fy": 777.0115884251717,
+	"cx": 416,
+	"cy": 240,
+	"K": [
+		[
+			777.0115884251717,
+			0,
+			416
+		],
+		[
+			0,
+			777.0115884251717,
+			240
+		],
+		[
+			0,
+			0,
+			1
+		]
+	],
+	"gvhmrFMm": 35,
+	"position": {
+		"x": 2.2476325408255,
+		"y": 1.2098566389683632,
+		"z": 10.822840597153636
+	},
+	"yaw": 0.5235987755982988,
+	"pitch": -0.08726646259971647,
+	"rotationOrder": "YXZ",
+	"azimuthDeg": 30,
+	"elevationDeg": 5,
+	"margin": 0.08,
+	"bindingAxis": "y",
+	"near": 0.1,
+	"far": 100,
+	"static": true,
+	"worldToCamera": [
+		[
+			0.8660254037844387,
+			0,
+			-0.49999999999999994,
+			3.4649134198493696
+		],
+		[
+			0.043577871373829076,
+			-0.9961946980917455,
+			0.07547908730517333,
+			0.2904075971091227
+		],
+		[
+			-0.4980973490458727,
+			-0.08715574274765817,
+			-0.862729915662821,
+			10.562174119816405
+		],
+		[
+			0,
+			0,
+			0,
+			1
+		]
+	],
+	"worldToCameraGl": [
+		[
+			0.8660254037844387,
+			0,
+			-0.49999999999999994,
+			3.4649134198493696
+		],
+		[
+			-0.043577871373829076,
+			0.9961946980917455,
+			-0.07547908730517333,
+			-0.2904075971091227
+		],
+		[
+			0.4980973490458727,
+			0.08715574274765817,
+			0.862729915662821,
+			-10.562174119816405
+		],
+		[
+			0,
+			0,
+			0,
+			1
+		]
+	],
+	"cameraToWorldRotationThree": [
+		[
+			0.8660254037844387,
+			-0.043577871373829076,
+			0.4980973490458727
+		],
+		[
+			0,
+			0.9961946980917455,
+			0.08715574274765817
+		],
+		[
+			-0.49999999999999994,
+			-0.07547908730517333,
+			0.862729915662821
+		]
+	],
+	"convention": {
+		"world": "CozyClay Studio / Three.js scene: right-handed, +Y up, metres. The character's front is +Z at azimuth 0.",
+		"worldToCamera": "OpenCV: [X Y Z 1]^T = worldToCamera * [x y z 1]^T, camera x right, y DOWN, z forward (depth).",
+		"projection": "u = fx * X / Z + cx, v = fy * Y / Z + cy. Square pixels, no distortion, no skew.",
+		"image": "Pixels continuous from the top-left corner of the top-left pixel: u right, v DOWN; pixel (col,row) covers [col,col+1)x[row,row+1) and its centre is (col+0.5,row+0.5); cx = width/2, cy = height/2.",
+		"worldToCameraGl": "Three/OpenGL view matrix (camera.matrixWorldInverse): x right, y up, looking down -z.",
+		"threeCamera": "PerspectiveCamera(fov = fovDeg vertical, aspect = width/height), position, rotation.set(pitch, yaw, 0) with order YXZ (radians); rendered through the Studio export capture.",
+		"gvhmr": "Run GVHMR with --f-mm gvhmrFMm: f_px = sqrt(W^2 + H^2) / sqrt(24^2 + 36^2) * f_mm equals fx = fy here."
+	}
+}
