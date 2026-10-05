@@ -3,6 +3,17 @@ import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { chromium, CHROME, ROOT, SHOTS, createCanvasServer, makeState, mockUpstream, realPng, addAsset, setKey } from './e2e-helpers.mjs';
 
+async function assertExpandedPrompt(page) {
+  // Reference changes can rebuild the inspector after its 250 ms debounce.
+  // Resolve and measure the current textarea in one browser task: the expanded
+  // class survives a rebuild, but an ElementHandle used by boundingBox does not.
+  await page.waitForFunction(() => {
+    const input = document.querySelector('#inspector.composer-expanded textarea[aria-label="图片提示词"]');
+    return input && input.getClientRects().length > 0 && getComputedStyle(input).visibility === 'visible'
+      && input.getBoundingClientRect().height >= 250;
+  });
+}
+
 test('connected mentions, hover, replacement, resizable image editor and clone stay local', { timeout: 60000 }, async t => {
   const state = makeState();
   const server = createCanvasServer({ staticDir: join(ROOT, 'dist'), directorDir: join(ROOT, '../../docs/minimax-video-ref/bundled-plugins/3d-director-stage'), upstreamFetch: mockUpstream(state) });
@@ -48,8 +59,27 @@ test('connected mentions, hover, replacement, resizable image editor and clone s
   await page.mouse.move(handle.x - 80, handle.y - 60, { steps: 8 }); await page.mouse.up();
   await page.waitForFunction(width => document.querySelector('#inspector').getBoundingClientRect().width < width - 50, size.width);
   await page.getByRole('button', { name: '放大编辑', exact: true }).click();
-  await page.waitForSelector('#inspector.composer-expanded');
-  assert.ok((await prompt.boundingBox()).height >= 250);
+  await assertExpandedPrompt(page);
+  // Exercise a real delayed store refresh with focus outside the input. The
+  // old field is detached, but the replacement must stay expanded and editable.
+  // Repeat the expand/collapse flow so a stale class or lost draft cannot pass.
+  for (let cycle = 0; cycle < 3; cycle++) {
+    const previousPrompt = await prompt.elementHandle();
+    await page.evaluate(id => {
+      document.querySelector('#inspector .composer-expand').focus();
+      window.__xp.store.touch({ type: 'data', id });
+    }, id);
+    await page.waitForFunction(input => !input.isConnected, previousPrompt);
+    assert.equal(await previousPrompt.boundingBox(), null, 'the delayed refresh replaces the old prompt');
+    await previousPrompt.dispose();
+    await assertExpandedPrompt(page);
+    assert.equal(await prompt.inputValue(), before);
+    await page.getByRole('button', { name: '收起编辑', exact: true }).click();
+    await page.waitForFunction(() => !document.querySelector('#inspector').classList.contains('composer-expanded'));
+    assert.equal(await prompt.inputValue(), before);
+    await page.getByRole('button', { name: '放大编辑', exact: true }).click();
+    await assertExpandedPrompt(page);
+  }
   await prompt.fill(before + ' 保持镜头位置');
   await page.screenshot({ path: join(SHOTS, 'image-expanded-editor.png') });
   await page.getByRole('button', { name: '收起编辑', exact: true }).click();
