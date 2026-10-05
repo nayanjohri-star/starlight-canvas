@@ -1034,8 +1034,8 @@
     },
     {
       "path": "frontend/canvas/tests/e2e-reference-workflow.test.mjs",
-      "size": 5279,
-      "sha256": "7c4ac4c49317dad182f27ba5b2b32a612444eb01cd6785536f499d904a047690"
+      "size": 7081,
+      "sha256": "6e4ce9aa6301c37c4373ecf03b8d182f35c9c3bbb38c596d491780ed87a6fa74"
     },
     {
       "path": "frontend/canvas/tests/e2e-review-conflict-ui-controls.test.mjs",
@@ -6435,7 +6435,7 @@
     {
       "path": "package.json",
       "size": 744,
-      "sha256": "f421ae07c5f46a167076819aa8a2b0b913ec853f46f258b146af20cc9b12bf73"
+      "sha256": "d34cf10fd500d48ae1d83ea4d4817ad44e22cf2cf480984eb3a8a98ba02e6be1"
     },
     {
       "path": "README.md",
