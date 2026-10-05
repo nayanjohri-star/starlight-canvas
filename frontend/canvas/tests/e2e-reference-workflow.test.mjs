@@ -64,10 +64,11 @@ test('connected mentions, hover, replacement, resizable image editor and clone s
   // old field is detached, but the replacement must stay expanded and editable.
   // Repeat the expand/collapse flow so a stale class or lost draft cannot pass.
   for (let cycle = 0; cycle < 3; cycle++) {
-    const previousPrompt = await prompt.elementHandle();
-    await page.evaluate(id => {
+    const previousPrompt = await page.evaluateHandle(id => {
       document.querySelector('#inspector .composer-expand').focus();
+      const input = document.querySelector('#inspector textarea[aria-label="图片提示词"]');
       window.__xp.store.touch({ type: 'data', id });
+      return input;
     }, id);
     await page.waitForFunction(input => !input.isConnected, previousPrompt);
     assert.equal(await previousPrompt.boundingBox(), null, 'the delayed refresh replaces the old prompt');
