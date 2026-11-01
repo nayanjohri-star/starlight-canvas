@@ -1,8 +1,8 @@
 {
   "file": "site-video-capabilities.json",
-  "version": "2026-09-18.1",
-  "sha256_lf": "2a7a897582a0ac8fa7934a9a22cc7ac5d17529c5c448f50a4dcbe456d63af829",
-  "source": "站点视频能力合同（后端 src/new-api/setting/video_capability/profiles.json），取自 2026-09-24 生产发布 h3-distilled-enable-20260924",
-  "pinned_at": "2026-09-25",
+  "version": "2026-10-29.1",
+  "sha256_lf": "2d2e6dfe4174db40f8488c0a9a50a16c93a80991389b14db4355560fe7d9fec9",
+  "source": "站点视频能力合同，唯一来源为后端 src/new-api/setting/video_capability/profiles.json；2026-10-28 起网关、门户、画布副本统一为 2026-10-22.1（并入网关为满参慢速版新增的 HEIC/HEIF、MOV、AAC 素材格式）",
+  "pinned_at": "2026-10-29",
   "purpose": "画布自包含的合同基准：能力表、价格与测试以此为准，不依赖仓库中后端快照的版本"
 }

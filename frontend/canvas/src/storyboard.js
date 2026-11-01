@@ -12,7 +12,7 @@ import { el, modal, toast, confirmDialog, fmtBytes } from './ui.js';
 import { SHOT_FIELDS, studioState, clone } from './studio-schema.js';
 import { uid } from './store.js';
 import { ASSET_CATEGORIES, KIND_LABEL } from './assets.js';
-import { getModel, modelIds, modeForIntent, nodeOutputIds } from './capabilities.js';
+import { getModel, modelIds, modeForIntent, nodeOutputIds, SEEDANCE_SHAPED_FAMILIES } from './capabilities.js';
 import { isModelUsable } from './keyvault.js';
 import { prepareImportFiles } from './script-import.js';
 import { openAssetReuse } from './asset-reuse.js';
@@ -38,13 +38,14 @@ const IMAGE_NODE_MAX_REFS = 1;   // 本站 image2.5 编辑接口仅支持一张�
 
 // 单图锚点 → 各 family 的真实单图模式与连线端口（纯函数，可测）：
 // H3 首帧模式接 frames 口；SD 首尾帧必须恰好两张 → 单图只能走 refs 素材参考；
-// Wan 不支持首尾帧 → i2v 单图接 refs 口。未知 family 按能力声明探测 frames→i2v→refs。
+// Wan 不支持首尾帧 → i2v 单图接 refs 口；SD 2.0、可灵、Muse 与 SD 一样走 refs。
+// 未知 family 按能力声明探测 frames→i2v→refs。
 export function singleImagePlan(modelId) {
   const m = getModel(modelId);
   if (!m) return null;
   if (m.family === 'h3') return modeForIntent(modelId, 'frames') ? { intent: 'frames', port: 'frames' } : { intent: 'refs', port: 'refs' };
   if (m.family === 'wan') return { intent: 'i2v', port: 'refs' };
-  if (m.family === 'sd25') return { intent: 'refs', port: 'refs' };
+  if (SEEDANCE_SHAPED_FAMILIES.includes(m.family)) return { intent: 'refs', port: 'refs' };
   if (modeForIntent(modelId, 'frames')) return { intent: 'frames', port: 'frames' };
   if (modeForIntent(modelId, 'i2v')) return { intent: 'i2v', port: 'refs' };
   if (modeForIntent(modelId, 'refs')) return { intent: 'refs', port: 'refs' };

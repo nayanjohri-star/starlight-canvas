@@ -1,8 +1,8 @@
 {
   "kind": "canvas-open-source-candidate",
   "status": "release-snapshot",
-  "sourceCommit": "5332132cd6161f78841092d1f807969385c4f314",
-  "sourceDirty": true,
+  "sourceCommit": "e6625ff5b648ec47afdb48b085670ef2d738d7b2",
+  "sourceDirty": false,
   "historyIncluded": false,
   "license": "AGPL-3.0-or-later",
   "includesProductionBackend": false,
@@ -44,23 +44,23 @@
     },
     {
       "path": "docs/director/README.md",
-      "size": 5319,
-      "sha256": "25fa95736c339782b1cddd51caf6a25cafad6cd9554bea835a6c16020f1437b9"
+      "size": 5595,
+      "sha256": "235ef159520d12f3de6559d7b3dce3d77d156d8e4a1b8cc7365b25ed91e6977f"
     },
     {
       "path": "docs/星盘AI_画布视频适配规范.md",
-      "size": 15936,
-      "sha256": "ac227b07a589bfb7c33d09f8995fa700796bb7a9b8e8fa999d6ceb3ec8e8371d"
+      "size": 16421,
+      "sha256": "3981babcbb61329ff74ed62cedb1ff5afd93e1ed1c3767960f9c297214835d42"
     },
     {
       "path": "docs/星盘AI_视频模型接入指南.md",
-      "size": 19663,
-      "sha256": "060902690768b59973aeb2b1cf02ed9db28af7522720917d104ad220c8f20b1e"
+      "size": 22683,
+      "sha256": "2bf96ac6b109b84deeb738ec2b629ddb1a6f655983706671ce6d3edb5fdf99fc"
     },
     {
       "path": "docs/星盘AI_视频模型能力表.json",
-      "size": 20753,
-      "sha256": "e59eb32def212422011395b49270769781812dca69f81035279322d13a749e5a"
+      "size": 36465,
+      "sha256": "1f62780abf275b1680611d876d4bd428f7108c45c6e7d304815b9dce383af7db"
     },
     {
       "path": "frontend/canvas/.gitignore",
@@ -69,23 +69,23 @@
     },
     {
       "path": "frontend/canvas/contracts/approved-copies.json",
-      "size": 295,
-      "sha256": "7af60a600ea258a3e430455bd14d7c54217ef3f1bf8a5b114d9937a7a0f08f4d"
+      "size": 481,
+      "sha256": "7cd96cb247ad3e9724475e35c78bb4ecef19f80227121767f72c70746b0e913f"
     },
     {
       "path": "frontend/canvas/contracts/MANIFEST.json",
-      "size": 482,
-      "sha256": "816ca232782f54487eae41e3deec1cdf9af8746c04894813488d3ba729a1dcac"
+      "size": 581,
+      "sha256": "2dda047e7aef745ad4709ed61f038276fd2454c8fdb3f3290d19e423e00d0d84"
     },
     {
       "path": "frontend/canvas/contracts/README.md",
-      "size": 830,
-      "sha256": "00d4d1fd2666e711b6f21f0c94e03c94bdee31765c2e49f63dff5ed9bc83b7d2"
+      "size": 1508,
+      "sha256": "78830f55c370e86b18c99a7673ca2278299d3347be2a130b8b92a81df8251ce2"
     },
     {
       "path": "frontend/canvas/contracts/site-video-capabilities.json",
-      "size": 11118,
-      "sha256": "2a7a897582a0ac8fa7934a9a22cc7ac5d17529c5c448f50a4dcbe456d63af829"
+      "size": 20313,
+      "sha256": "2d2e6dfe4174db40f8488c0a9a50a16c93a80991389b14db4355560fe7d9fec9"
     },
     {
       "path": "frontend/canvas/docs/canvas-release/0.5/core-contract.md",
@@ -154,8 +154,8 @@
     },
     {
       "path": "frontend/canvas/scripts/build.mjs",
-      "size": 13551,
-      "sha256": "ba76f170535a7214a0f4c184938c7a7e5ecebfadbb3628762008308abd481a05"
+      "size": 14247,
+      "sha256": "d0760e9a0032880659f87e87f7358367a9a524e7e1b720419d911d663a24a847"
     },
     {
       "path": "frontend/canvas/scripts/dbg2.mjs",
@@ -174,8 +174,8 @@
     },
     {
       "path": "frontend/canvas/scripts/lib/capability-contract.mjs",
-      "size": 7547,
-      "sha256": "c405713044a64d90327c08650de5293a6a756e4779afa3967071c3c0dcec4954"
+      "size": 8334,
+      "sha256": "0fa1624334408c6e08aff16b7f6a49348744acc13ba1179ff9b2867f00c974e3"
     },
     {
       "path": "frontend/canvas/scripts/lib/hosted-director-evidence.mjs",
@@ -204,8 +204,8 @@
     },
     {
       "path": "frontend/canvas/scripts/package-open-source.mjs",
-      "size": 6892,
-      "sha256": "6a8aa4d3672f8df57b5b4f7935e30baef9b85639381a9de4e2fe3554f724c0d4"
+      "size": 7107,
+      "sha256": "5ba0b9e0135f4eeac6b4eddc0dc5f0194b16b9b7c6d93d4e12e635463eb33436"
     },
     {
       "path": "frontend/canvas/scripts/package-release.mjs",
@@ -214,8 +214,8 @@
     },
     {
       "path": "frontend/canvas/scripts/release-gate.config.mjs",
-      "size": 7835,
-      "sha256": "7ee0e317ea78a03a1b0319be99f4225597a4bb0a1549ed2b27584e568490c438"
+      "size": 8136,
+      "sha256": "fcc7ee8880c97eb1b9d0765d38e339ae327ee3b82446f73c1f0901b2b8fe6d00"
     },
     {
       "path": "frontend/canvas/scripts/release-gate.mjs",
@@ -274,8 +274,8 @@
     },
     {
       "path": "frontend/canvas/server/capability-contract.test.mjs",
-      "size": 5760,
-      "sha256": "f706d2be15423536b5bcecb1d815e340f9a9216a6ea94e0b0035ad4cc691d770"
+      "size": 7194,
+      "sha256": "721c403a90265f4e9e0176d60ccc9f7c180c4d3c7fee624bded6bfde19c36ab8"
     },
     {
       "path": "frontend/canvas/server/director-bridge.test.mjs",
@@ -374,8 +374,8 @@
     },
     {
       "path": "frontend/canvas/src/api.js",
-      "size": 18618,
-      "sha256": "c0ed0032bed21932edcb2c6f274e1fa0a2b4b9c82642ffef85d94770cddacbe0"
+      "size": 21780,
+      "sha256": "52c14e18f69799f2da5152cd4771acce589a345ced01d95d9117c5edc0b3d038"
     },
     {
       "path": "frontend/canvas/src/app.css",
@@ -424,13 +424,13 @@
     },
     {
       "path": "frontend/canvas/src/capabilities.js",
-      "size": 33419,
-      "sha256": "d02a33c0c2e4a12215aeda999e977fab736226279854c4e8379068aff50b733d"
+      "size": 34738,
+      "sha256": "c0f511921974b4d04a560b8d46c690f4d9a725e66ede41132fbecbfa152e535b"
     },
     {
       "path": "frontend/canvas/src/capability-rules.js",
-      "size": 4786,
-      "sha256": "388b0dcf68b12e504264b9160f9f92958254d4799ce13ba29a0c2c62a93f5cc4"
+      "size": 6233,
+      "sha256": "067c3e470bf245ed7deb2eca22df88055caee114d9089c03e3868cf367130c29"
     },
     {
       "path": "frontend/canvas/src/desktop-shell.css",
@@ -479,8 +479,8 @@
     },
     {
       "path": "frontend/canvas/src/gennode.js",
-      "size": 116754,
-      "sha256": "91300f8df0aed340329a2589f9ef5d52eb93b5c79c6516afac95b9e071345508"
+      "size": 117797,
+      "sha256": "b82d124a20ca9164b29151233561bf03de40d9a214f8e5b0b83bb9105ed41df3"
     },
     {
       "path": "frontend/canvas/src/hosted-session.js",
@@ -514,8 +514,8 @@
     },
     {
       "path": "frontend/canvas/src/main.js",
-      "size": 87638,
-      "sha256": "9b0014c81d07de0477c6f821a07105b00f6adfef25d77960e4b93b1f655a5bac"
+      "size": 88212,
+      "sha256": "c33e50058e98881a9ef852f920455e6e679395539042e387f0db1493f34862b0"
     },
     {
       "path": "frontend/canvas/src/media-preview.js",
@@ -539,8 +539,8 @@
     },
     {
       "path": "frontend/canvas/src/node-composer.js",
-      "size": 14228,
-      "sha256": "e3ea282ad3d3e42c1c113ceae6ba883d3d267a49e4a8991c0d09a163fdeabeb7"
+      "size": 14828,
+      "sha256": "2ebb86a35fe681d148031dd313cfe6e7f522c1e3a993f1f40c730d6298cdf107"
     },
     {
       "path": "frontend/canvas/src/project-hub.js",
@@ -614,13 +614,13 @@
     },
     {
       "path": "frontend/canvas/src/storyboard.js",
-      "size": 77477,
-      "sha256": "4f72a2900dd8a63fe85221f23626d42eefe4c3116feba3b9e04188e602c64816"
+      "size": 77578,
+      "sha256": "3e4c8e206bf31493ef8818ab4e69cb8c32dbdf4d30f94ba78fd0329dcf4d5a59"
     },
     {
       "path": "frontend/canvas/src/studio-gen.js",
-      "size": 67676,
-      "sha256": "a43557d10832f2868964f05752a623c454b64db685a35ec8719dcb29f84bde94"
+      "size": 68130,
+      "sha256": "f3a4ad9ca4288095adb40f051d60af977cc0e2af3abd42e99395c0787f4a2656"
     },
     {
       "path": "frontend/canvas/src/studio-schema.js",
@@ -714,8 +714,8 @@
     },
     {
       "path": "frontend/canvas/tests/accept-hosted-deploy-config.test.mjs",
-      "size": 3773,
-      "sha256": "390f58dfd625b0cf449a2f3857afc99f15d2fd9a2697ee19d3d8019be12dfa79"
+      "size": 4304,
+      "sha256": "9c162b3e183d76a9871623c58cfe19cc57dd988b4b38d1302bb90363da088834"
     },
     {
       "path": "frontend/canvas/tests/accept-hosted-evidence.test.mjs",
@@ -799,8 +799,8 @@
     },
     {
       "path": "frontend/canvas/tests/capabilities.test.mjs",
-      "size": 3453,
-      "sha256": "1b823d3388545d8ef96019c080f6ff9422620158974eefe465d5ed17759338e6"
+      "size": 6235,
+      "sha256": "5b46f150dc3a6a73074b656a225f3620a6591665d4ccd9762069d345fbce9409"
     },
     {
       "path": "frontend/canvas/tests/cross-tab-safety.test.mjs",
@@ -873,6 +873,11 @@
       "sha256": "0c00cdfc7dbdcebb437babd4b0bd17e4903f4169151506f0f598c95fe1c74428"
     },
     {
+      "path": "frontend/canvas/tests/e2e-composer-create-room.test.mjs",
+      "size": 4126,
+      "sha256": "ad9f948951e326809005ace65a8a97950ef9f850babbc6de57f79e747aef0679"
+    },
+    {
       "path": "frontend/canvas/tests/e2e-composer-frames.test.mjs",
       "size": 11735,
       "sha256": "66d481c748453919414deef280fbbe43b74d56cf25d4b752ffdd4c8abff19122"
@@ -914,8 +919,8 @@
     },
     {
       "path": "frontend/canvas/tests/e2e-h3-compat.test.mjs",
-      "size": 28560,
-      "sha256": "3f4f8dad5d168950741bebaa45556cfc9062a3bdbf8e4d4a0050d4c0ae9bc183"
+      "size": 28563,
+      "sha256": "729886ab550dbb46f436ec556ea4ced2c0919a8fd1e6b5c813be50fcb5faec67"
     },
     {
       "path": "frontend/canvas/tests/e2e-helpers.mjs",
@@ -1044,8 +1049,8 @@
     },
     {
       "path": "frontend/canvas/tests/e2e-review-interactions.test.mjs",
-      "size": 6439,
-      "sha256": "013e47909b8dda9742108da2d38ca05d552d116e88d5a817adaad8f2ee7445d8"
+      "size": 6756,
+      "sha256": "dd451fb968162e8b7c4bdde1d40671afee42577eb09ffef8ed5f2ee07274ab29"
     },
     {
       "path": "frontend/canvas/tests/e2e-review-media-lifecycle.test.mjs",
@@ -1059,8 +1064,8 @@
     },
     {
       "path": "frontend/canvas/tests/e2e-rounded-v2.test.mjs",
-      "size": 9292,
-      "sha256": "115e985b1667de9b0190b9732dfc2ef2263efc39848414d1072d6b449a01c1e5"
+      "size": 9749,
+      "sha256": "2b7d21d6fdc912020d134f10f65201b1ceb8c1e07957857576f6f3458b334cf7"
     },
     {
       "path": "frontend/canvas/tests/e2e-safety-fixes.test.mjs",
@@ -1084,8 +1089,8 @@
     },
     {
       "path": "frontend/canvas/tests/e2e-upgrade.test.mjs",
-      "size": 18828,
-      "sha256": "5180bf175dc0ce61512d6136df24a26558f0ef238414cfb76b6885ade33efb6d"
+      "size": 19063,
+      "sha256": "f1df254c6a0af488398cc19d8d4e05bdfbd0cb39cee87bd22b76e3297ace1173"
     },
     {
       "path": "frontend/canvas/tests/e2e-workflow-import.test.mjs",
@@ -1214,8 +1219,8 @@
     },
     {
       "path": "frontend/canvas/tests/hosted-director-generation-ui.test.mjs",
-      "size": 19957,
-      "sha256": "9bc3889f330a5a80cd94d7dbe68520bc1ad3ce1c9c5e7186c62275534d43f269"
+      "size": 20201,
+      "sha256": "2850b94da2bc953d2b6db70d0abdfcc4a93034f722667c085cdcd05180d2025d"
     },
     {
       "path": "frontend/canvas/tests/hosted-director-native-performance.test.mjs",
@@ -1249,8 +1254,8 @@
     },
     {
       "path": "frontend/canvas/tests/image-job-recovery.test.mjs",
-      "size": 3687,
-      "sha256": "13342b628cee456ecb29974f496656287319cbcf2e8bcb8d193d834eeb94a93f"
+      "size": 9672,
+      "sha256": "0c0d5cb9d3826a7f60dd8886c621ce1e7ceb33ae0d9f33ce4e498ecff2277de8"
     },
     {
       "path": "frontend/canvas/tests/import-integrity-fixes.test.mjs",
@@ -1274,8 +1279,8 @@
     },
     {
       "path": "frontend/canvas/tests/open-source-package.test.mjs",
-      "size": 2040,
-      "sha256": "3190035823cfba242ad423ca5131ebe420b23b2d0e2e40c4b49323f517b70cda"
+      "size": 2129,
+      "sha256": "b930e3ac32c427010c7044875c89019f2a994c901e12e010d03a0214e40b1bb4"
     },
     {
       "path": "frontend/canvas/tests/package-recovery.test.mjs",
@@ -1284,8 +1289,8 @@
     },
     {
       "path": "frontend/canvas/tests/payload.test.mjs",
-      "size": 7956,
-      "sha256": "73e5ef28bff4c1a4d2860395583270628bf854521b2600d67d15e909a1510025"
+      "size": 8695,
+      "sha256": "780ff711822c3363bfa2c3feb1a77c78d7631536848be84dd312a93d4fc2d55e"
     },
     {
       "path": "frontend/canvas/tests/project-zip-interoperability.test.mjs",
@@ -1489,8 +1494,8 @@
     },
     {
       "path": "frontend/canvas/tests/source-build-text.test.mjs",
-      "size": 9436,
-      "sha256": "beaf7e48d8654bc2fcd6bbb516e17282f64d33d0b3958451c6e04b96e8cc6c9e"
+      "size": 8596,
+      "sha256": "2824fc37a6f73b58e838cf1d13ffcba26a850a8dcd041098a9274e3e368e26f2"
     },
     {
       "path": "frontend/canvas/tests/storage-transaction-fixes.test.mjs",
@@ -1611,6 +1616,11 @@
       "path": "frontend/canvas/tests/upgrade-workspace-client.test.mjs",
       "size": 15957,
       "sha256": "b4dc83bfd71addf5bfbb3ee3c981b3c5583cafc6999c7fc1249f06d1478e4de4"
+    },
+    {
+      "path": "frontend/canvas/tests/video-families.test.mjs",
+      "size": 7807,
+      "sha256": "8ae0eedf812212a2ee204787af375aee7f794a3a12499f07a8ea05d99e919504"
     },
     {
       "path": "frontend/canvas/tests/workflow-explicit-scope.test.mjs",
@@ -1839,8 +1849,8 @@
     },
     {
       "path": "frontend/director/README.md",
-      "size": 2451,
-      "sha256": "7597d62b912e910f6077c239524e0653ca1cdc8d747beb5a57f2e243144669d3"
+      "size": 2554,
+      "sha256": "4bd195aa1c83986a151e41688a911b2a097e560e8b46a5dc1e1e7e03a38a58d0"
     },
     {
       "path": "frontend/director/src/analytics.js",
@@ -6435,7 +6445,7 @@
     {
       "path": "package.json",
       "size": 744,
-      "sha256": "d34cf10fd500d48ae1d83ea4d4817ad44e22cf2cf480984eb3a8a98ba02e6be1"
+      "sha256": "c1190a64da6a1dc264ed546ea778f5d7d5b7966f8d05c3cd7e589f40b6590134"
     },
     {
       "path": "README.md",
@@ -6454,5 +6464,5 @@
     }
   ],
   "repository": "https://github.com/nayanjohri-star/starlight-canvas",
-  "releaseTag": "v0.5.0-beta.1"
+  "releaseTag": "v0.5.0-beta.3"
 }

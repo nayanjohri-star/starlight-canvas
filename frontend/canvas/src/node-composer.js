@@ -23,7 +23,9 @@ export function createNodeComposer({ board, store, box, closeButton }) {
   try { const value = JSON.parse(localStorage.getItem('xp-composer-size')); if (Number.isFinite(value?.width) && Number.isFinite(value?.height)) userSize = { width: Math.max(420, Math.min(1200, value.width)), height: Math.max(MIN_HEIGHT, Math.min(1000, value.height)) }; } catch {}
   const resize = document.createElement('button'); resize.type = 'button'; resize.className = 'composer-resize-handle';
   resize.textContent = '◢'; resize.title = '拖动调整编辑面板大小；方向键微调'; resize.setAttribute('aria-label', '调整编辑面板大小'); resize.hidden = true;
-  document.getElementById('overlay-root').append(resize);
+  // This is a persistent editor control, not an open popup. Keeping it in the
+  // overlay root would block canvas shortcuts even while the handle is hidden.
+  document.body.append(resize);
   function placeResize() {
     const r = box.getBoundingClientRect(); resize.style.left = `${r.right - 26}px`; resize.style.top = `${r.bottom - 26}px`;
   }
@@ -209,6 +211,12 @@ export function createNodeComposer({ board, store, box, closeButton }) {
       }
       node = next; if (!node) delete box.dataset.composerNode; schedule();
     },
+    // A node the user has just created from a menu or the toolbar lands in the
+    // middle of the view, where the editor below it would be squeezed to its
+    // minimum height (its fields hidden behind the submit row). Make room once,
+    // exactly as for a click on the node. Only this node, only on that request:
+    // selecting in code still never moves the canvas.
+    makeRoom(id) { if (node?.id === id && !portGesture) { pendingPan = id; schedule(); } },
     get expanded() { return expanded; },
     destroy() {
       resize.remove();

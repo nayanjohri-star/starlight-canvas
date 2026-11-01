@@ -24,6 +24,7 @@ test('community source includes its contracts without private deployment reports
   assert.ok(files.has('frontend/canvas/contracts/site-video-capabilities.json'));
   assert.ok(files.has('frontend/canvas/LICENSE'));
   assert.equal(files.has('frontend/canvas/docs/canvas-release/0.5/astra-closure-register.md'), false);
+  assert.equal(files.has('frontend/canvas/tests/source-archive-scope.test.mjs'), false);
   const publicGuides = new Set(['frontend/canvas/docs/canvas-release/0.5/core-contract.md',
     'frontend/canvas/docs/canvas-release/0.5/hosted-api-contract.md']);
   for (const path of files.keys()) {

@@ -18,4 +18,4 @@
 
 修改版按 AGPL-3.0-or-later 提供，保留上游版权、GPL 历史贡献和第三方声明。字体、Three.js、Mediabunny 等继续使用各自许可证，见 LICENSE、LICENSING.md 与 THIRD_PARTY_NOTICES.md。这不是整库统一换许可证的声明。
 
-页脚源码入口固定到当前安装目录的 source.zip。部署必须一同提供它，不能只链接上游。对应源码包含修改版、画布集成、锁文件、能力合同、安装说明及相关托管适配器和静态配置，不包含真实凭据、用户工程、数据库和运行日志。
+页脚源码入口固定到当前安装目录的 source.zip。部署必须一同提供它，不能只链接上游。对应源码包含修改版、画布集成及其构建脚本、锁文件、能力合同和安装说明（frontend/director、frontend/canvas、能力表与 SOURCE-VERSION.json），不包含站点后端的托管适配器、部署配置、真实凭据、用户工程、数据库和运行日志。

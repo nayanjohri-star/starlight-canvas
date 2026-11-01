@@ -309,10 +309,10 @@ export function taskPanelEntries({ tasks = [], pending = [], store, runner, boar
         // 停止本地等待：只停本端 GET，不代表服务器取消或失败
         if (view.actions.stopWaiting) btn('停止本地等待', '本机不再查询；服务器上的任务不受影响', () => runner.setPollPaused(t.taskId, true, t.projectId));
         // 请求取消仅 v2 在途开放（canRequestCancel 含 executorVersion===2 门槛）——旧接口不虚假开放
-        if (view.actions.cancel) btn('请求取消', '请求服务器停止后续渠道尝试', async () => {
+        if (view.actions.cancel) btn('请求取消', '请求服务器停止后续尝试', async () => {
           const node = store.node(t.nodeId) ?? await runner.restoreTask(t.taskId);
           if (!node) { toast('节点已删除且无法找回，任务仍在任务列表跟踪', 'warn', 5000); return; }
-          const ok = await confirmDialog('请求取消该任务？', el('p', { text: '将请求服务器停止后续渠道尝试；当前上游可能仍会生成，若最终可交付成功仍按原价收费，取消不保证立即退款。任务号保留。' }));
+          const ok = await confirmDialog('请求取消该任务？', el('p', { text: '将请求服务器停止后续尝试；当前任务可能仍会继续生成，若最终可交付成功仍按原价收费，取消不保证立即退款。任务号保留。' }));
           if (ok) await runner.cancelTask(node);
         });
         // 创建新版本：显式动作，复制参数与连线为草稿，原任务与成片保留，新版本需手动提交
@@ -710,6 +710,11 @@ async function boot() {
   function spawnNodeAt(type, pos = spawnPos(SPAWN_H[type]), data = null) {
     const n = store.addNode(type, pos.x, pos.y, data ?? defaultNodeData(type));
     board.select('node', n.id);
+    // 空白画布上新建的第一个可编辑节点：像点击节点一样腾一次地方，编辑器不被压到最小高度。
+    // 只限第一个：连续新建时每次都平移会累积，把先建的节点推出视野（e2e-upgrade 调色板连建三个）。
+    // 前提：board.select → onSelect → renderInspector → nodeComposer.setNode 是同步链，此刻编辑器已指向 n；
+    // 若选中改走节流渲染，这里会静默失效（e2e-composer-create-room 会失败）。
+    if (store.project.nodes.length === 1) nodeComposer?.makeRoom(n.id);
     requestAnimationFrame(() => {
       if (store.node(n.id) !== n || board.selectedIds.length !== 1 || board.selectedIds[0] !== n.id) return;
       const r = document.querySelector(`[data-node="${n.id}"]`)?.getBoundingClientRect();

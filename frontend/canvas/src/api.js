@@ -175,6 +175,59 @@ export function createSiteClient({ mode = 'local', base = mode === 'hosted' ? '/
     checkResponse(res);
     return value;
   }
+  // A finished job may answer with a link to its image instead of embedding it:
+  // a 4K PNG embedded as base64 is over 20 MB of JSON, which a slow connection
+  // often cannot finish in one piece. The image itself is fetched in ranges
+  // and resumed after interruptions, then handed on as b64_json like before.
+  const IMAGE_DELIVERY = { 'X-Canvas-Image-Delivery': 'url' };
+  async function downloadJobImage(id, { signal } = {}) {
+    const path = `/v1/images/jobs/${encodeURIComponent(id)}/image`;
+    const parts = [];
+    let received = 0, total = null, failures = 0;
+    while (total === null || received < total) {
+      signal?.throwIfAborted();
+      const before = received;
+      try {
+        const res = await request(path, { headers: received ? { Range: `bytes=${received}-` } : {}, signal });
+        if (res.status === 200 && received) { parts.length = 0; received = 0; }
+        else if (received && res.status !== 206) throw new ApiError(0, 'image_download_failed', '图片下载续传失败');
+        const range = /\/(\d+)$/.exec(res.headers.get('content-range') || '');
+        total = range ? Number(range[1]) : Number(res.headers.get('content-length')) || total;
+        const reader = res.body.getReader();
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          parts.push(value); received += value.byteLength;
+        }
+        checkLive();
+        if (total === null) total = received;
+      } catch (e) {
+        if (signal?.aborted) throw e;
+        if (['image_job_expired', 'identity_changed', 'auth_required', 'image_job_not_found'].includes(e.code)) throw new ApiError(0, e.code, e.message);
+        failures = received > before ? 0 : failures + 1;
+        if (failures > 8) throw new ApiError(0, 'image_download_failed', '图片已生成，但多次下载中断；可稍后重新打开画布继续获取，请勿重新生成。');
+        await new Promise(resolve => setTimeout(resolve, Math.min(1000 * 2 ** failures, 8000)));
+      }
+    }
+    const bytes = new Uint8Array(await new Blob(parts).arrayBuffer());
+    let out = '';
+    // Encode in 3-byte-aligned slices so each piece is valid base64 on its own.
+    for (let i = 0; i < bytes.length; i += 24576) {
+      const slice = bytes.subarray(i, i + 24576);
+      let binary = '';
+      for (let j = 0; j < slice.length; j += 8192) binary += String.fromCharCode.apply(null, slice.subarray(j, j + 8192));
+      out += btoa(binary);
+    }
+    return out;
+  }
+  async function imageJobData(id, data, { signal } = {}) {
+    const item = data?.data?.[0];
+    if (data?.data?.length !== 1 || typeof item?.url !== 'string' || item.b64_json) return data;
+    if (item.url !== `${base}/v1/images/jobs/${encodeURIComponent(id)}/image`)
+      throw new ApiError(0, 'bad_image_job', '图片下载地址无法确认');
+    const { url, mime_type, bytes, ...rest } = item;
+    return { ...data, data: [{ ...rest, b64_json: await downloadJobImage(id, { signal }) }] };
+  }
   async function waitImageJob(id, { signal } = {}) {
     if (!hosted || !/^[A-Za-z0-9_-]{8,100}$/.test(id)) throw new ApiError(0, 'invalid_image_job', '图片任务编号无效');
     const deadline = Date.now() + 20 * 60 * 1000;
@@ -182,9 +235,9 @@ export function createSiteClient({ mode = 'local', base = mode === 'hosted' ? '/
     while (Date.now() < deadline) {
       signal?.throwIfAborted();
       try {
-        const res = await request(`/v1/images/jobs/${encodeURIComponent(id)}`, { signal });
+        const res = await request(`/v1/images/jobs/${encodeURIComponent(id)}`, { headers: IMAGE_DELIVERY, signal });
         const data = await readJson(res);
-        if (res.status === 200) return data;
+        if (res.status === 200) return await imageJobData(id, data, { signal });
         if (res.status !== 202 || data?.id !== id || data.status !== 'processing')
           throw new ApiError(0, 'bad_image_job', '图片任务状态无法确认');
         errors = 0;
@@ -207,8 +260,9 @@ export function createSiteClient({ mode = 'local', base = mode === 'hosted' ? '/
     const asyncJob = hosted && imageJobs && operationId;
     try {
       const res = await request(path, { method: 'POST', headers: { 'Content-Type': 'application/json',
-        ...(asyncJob ? { 'X-Canvas-Image-Job': operationId } : {}) }, body: bodyString, signal });
-      if (!asyncJob || res.status !== 202) return readJson(res);
+        ...(asyncJob ? { 'X-Canvas-Image-Job': operationId, ...IMAGE_DELIVERY } : {}) }, body: bodyString, signal });
+      if (!asyncJob) return readJson(res);
+      if (res.status !== 202) return imageJobData(operationId, await readJson(res), { signal });
       await res.body?.cancel();
     } catch (e) {
       if (!asyncJob || signal?.aborted || (e.status >= 400 && e.status < 500)) throw e;

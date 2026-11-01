@@ -13,6 +13,8 @@ const CAPABILITY = 'docs/星盘AI_视频模型能力表.json';
 const PUBLIC_GUIDES = ['docs/星盘AI_视频模型接入指南.md', 'docs/星盘AI_画布视频适配规范.md'];
 const PUBLIC_RELEASE_GUIDES = new Set(['frontend/canvas/docs/canvas-release/0.5/core-contract.md',
   'frontend/canvas/docs/canvas-release/0.5/hosted-api-contract.md']);
+// Internal checks whose fixtures are private (the supplier deny-list) stay with the hosted source.
+const PRIVATE_FILES = new Set(['frontend/canvas/tests/source-archive-scope.test.mjs']);
 const BLOCKED = /(?:^|\/)(?:\.git|node_modules|dist|dist-hosted|\.vite|\.release-evidence|release-packages|outputs|logs|shots|playwright-report|test-results|_temp|_backups|secrets|cookies|sessions)(?:\/|$)|(?:^|\/)\.env(?:\.|$)|\.(?:pem|key|pfx|har|db|sqlite3?|dump|bak|tgz)$/i;
 const SECRET_PATTERNS = [
   ['private-key', /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/g],
@@ -46,7 +48,7 @@ export async function sourceFiles() {
   for (const path of paths) {
     if (!(ALLOWED.some(prefix => path.startsWith(prefix)) || path === CAPABILITY || PUBLIC_GUIDES.includes(path)) || BLOCKED.test(path)) continue;
     if (path.startsWith('frontend/canvas/docs/canvas-release/') && !PUBLIC_RELEASE_GUIDES.has(path)) continue;
-    if (path.startsWith('frontend/director/public/fonts/unicode-local/')) continue;
+    if (path.startsWith('frontend/director/public/fonts/unicode-local/') || PRIVATE_FILES.has(path)) continue;
     const info = await lstat(join(ROOT, path));
     if (!info.isFile() || info.isSymbolicLink()) throw new Error(`源码中有非普通文件：${path}`);
     const bytes = await readFile(join(ROOT, path)); findings.push(...secretFindings(path, bytes));

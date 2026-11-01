@@ -30,7 +30,7 @@ const LIMITED = 'minimax-h3-768p-limited';   // 能力受限768p：¥1.5/次、�
 const SLOW = 'minimax-h3-768p-full-slow';    // 满参慢速版768p：¥0.10/秒、仅尾帧/纯音频/mp4-only
 const ALL_IDS = [...MODELS_11, LIMITED, SLOW];
 
-// 有效音频使用真实2秒PCM WAV；共享helper的一秒样本不符合DMC的最短时长。
+// 有效音频使用真实2秒PCM WAV；共享helper的一秒样本不符合上游的最短时长。
 const AUDIO_2S = (() => {
   const bytes = new Uint8Array(44 + 32000), view = new DataView(bytes.buffer);
   const text = (at, value) => [...value].forEach((c, i) => { bytes[at + i] = c.charCodeAt(0); });

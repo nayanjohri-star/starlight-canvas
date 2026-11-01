@@ -246,7 +246,8 @@ export function createGenerators(deps) {
       let json;
       try { json = await req.send(op); }
       catch (e) {
-        if (e instanceof ApiError && (KNOWN_REJECT.has(e.status) || e.code === 'image_jobs_busy') && e.code !== 'image_job_conflict') {
+        if (e instanceof ApiError && (KNOWN_REJECT.has(e.status)
+          || (e.status === 429 && ['image_jobs_busy', 'image_upload_busy'].includes(e.code))) && e.code !== 'image_job_conflict') {
           op.state = 'rejected'; op.error = `${e.status} ${e.code || ''} ${e.message}`.trim(); op.resolvedAt = Date.now();
           await persistOp(node, project);
           throw Object.assign(new Error(`请求被拒绝（${e.status}${e.code ? ' ' + e.code : ''}）：${e.message}`), { code: 'rejected' });
@@ -442,7 +443,7 @@ export function createGenerators(deps) {
       const eff = effectivePrompt(store, node, d.prompt ?? '');
       if (eff.problems.length) throw new Error(eff.problems[0]);
       if (!eff.prompt.trim()) throw new Error('提示词不能为空');
-      const size = imageSizeFor(d.resolution ?? '1K', d.ratio ?? '1:1');
+      const size = imageSizeFor(d.resolution ?? '1K', d.ratio ?? '1:1', model);
       if (!size) throw new Error('该档位不支持所选比例');
       const refs = wiredOutputs(store, node.id, 'refs');
       if (refs.problems.length) throw new Error(refs.problems[0]);
@@ -646,7 +647,7 @@ export function createGenerators(deps) {
       const res0 = d.resolution ?? '1K';
       if (!getImageModel(d.model)) issues.push('未选择图片型号');
       else if (!isModelUsable(d.model)) issues.push('型号不在当前密钥可用范围');
-      if (!imageSizeFor(res0, d.ratio ?? '1:1')) issues.push('该档位不支持所选比例');
+      if (!imageSizeFor(res0, d.ratio ?? '1:1', d.model)) issues.push('该型号不支持所选档位或比例');
       const eff = effectivePrompt(store, node, d.prompt ?? '');
       issues.push(...eff.problems);
       if (!eff.prompt.trim()) issues.push('提示词不能为空');
@@ -690,7 +691,7 @@ export function createGenerators(deps) {
       const m = getImageModel(d.model);
       box.append(
         el('div', { class: 'row' }, el('span', { text: '型号' }), el('b', { text: m?.display_name ?? d.model ?? '—' })),
-        el('div', { class: 'row' }, el('span', { text: '尺寸' }), el('b', { text: imageSizeFor(d.resolution ?? '1K', d.ratio ?? '1:1') ?? '—' })),
+        el('div', { class: 'row' }, el('span', { text: '尺寸' }), el('b', { text: imageSizeFor(d.resolution ?? '1K', d.ratio ?? '1:1', d.model) ?? '—' })),
       );
       const ra = d.resultAssetId ? store.project?.assets?.[d.resultAssetId] : null;
       if (ra && !ra.missing && assets.objectURL) assets.objectURL(ra.id).then(u => { if (u) box.prepend(el('img', { class: 'preview', src: u })); });
@@ -894,9 +895,10 @@ export function createGenerators(deps) {
 
     function buildImage() {
       const box = el('div', { class: 'image-generation-form' });
-      if (!d.model) d.model = imageModelIds()[0] ?? '';
-      if (!d.resolution) d.resolution = imageResolutions()[0];
-      if (!d.ratio) d.ratio = imageRatios(d.resolution)[0] ?? '1:1';
+      // Fill only missing values: a provider switch keeps the node's settings and marks unsupported ones below.
+      if (!d.model) d.model = imageModelIds().find(isModelUsable) ?? imageModelIds()[0] ?? '';
+      if (!d.resolution) d.resolution = imageResolutions(d.model)[0];
+      if (!d.ratio) d.ratio = imageRatios(d.resolution, d.model)[0] ?? '1:1';
       pruneParams(node);
       if (!d.params || typeof d.params !== 'object' || Array.isArray(d.params)) d.params = {};
 
@@ -905,26 +907,27 @@ export function createGenerators(deps) {
       if (d.model && !getImageModel(d.model)) sel.prepend(el('option', { value: d.model, text: `${d.model} · 当前接口不支持，请选择型号`, selected: true, disabled: true }));
       sel.addEventListener('change', () => {
         d.model = sel.value;
-        if (!imageResolutions().includes(d.resolution)) d.resolution = imageResolutions()[0];
-        if (!imageSizeFor(d.resolution, d.ratio)) d.ratio = imageRatios(d.resolution)[0];
+        if (!imageResolutions(d.model).includes(d.resolution)) d.resolution = imageResolutions(d.model)[0];
+        if (!imageSizeFor(d.resolution, d.ratio, d.model)) d.ratio = imageRatios(d.resolution, d.model)[0];
         store.touch({ type: 'data', id: node.id }); rerender();
       });
-      const res = el('select', {}, imageResolutions().map(r => el('option', { value: r, text: r, selected: r === d.resolution })));
-      if (!imageResolutions().includes(d.resolution)) res.prepend(el('option', { value: d.resolution, text: `${d.resolution} · 当前接口不支持`, selected: true, disabled: true }));
+      const res = el('select', {}, imageResolutions(d.model).map(r => el('option', { value: r, text: r, selected: r === d.resolution })));
+      if (!imageResolutions(d.model).includes(d.resolution)) res.prepend(el('option', { value: d.resolution, text: `${d.resolution} · 当前接口不支持`, selected: true, disabled: true }));
       res.addEventListener('change', () => {
         d.resolution = res.value;
-        if (!imageSizeFor(d.resolution, d.ratio)) d.ratio = imageRatios(d.resolution)[0];   // 档位切换时重置失效比例（陈旧的 UI-only 参数不留）
+        if (!imageSizeFor(d.resolution, d.ratio, d.model)) d.ratio = imageRatios(d.resolution, d.model)[0];
         store.touch({ type: 'data', id: node.id }); rerender();
       });
-      const ratio = el('select', {}, imageRatios(d.resolution).map(r =>
-        el('option', { value: r, text: `${r}（${imageSizeFor(d.resolution, r)}）`, selected: r === d.ratio })));
-      if (!imageRatios(d.resolution).includes(d.ratio)) ratio.prepend(el('option', { value: d.ratio, text: `${d.ratio} · 当前接口不支持`, selected: true, disabled: true }));
+      const ratio = el('select', {}, imageRatios(d.resolution, d.model).map(r =>
+        el('option', { value: r, text: `${r}（${imageSizeFor(d.resolution, r, d.model)}）`, selected: r === d.ratio })));
+      if (!imageRatios(d.resolution, d.model).includes(d.ratio)) ratio.prepend(el('option', { value: d.ratio, text: `${d.ratio} · 当前接口不支持`, selected: true, disabled: true }));
       ratio.addEventListener('change', () => { d.ratio = ratio.value; store.touch({ type: 'data', id: node.id }); rerender(); });
       box.append(
         el('div', { class: 'field' }, el('label', { text: '图片型号' }), sel),
         el('div', { class: 'field' }, el('label', { text: '档位' }), res),
         el('div', { class: 'field' }, el('label', { text: '比例' }), ratio),
       );
+      if (getImageModel(d.model)?.variable_pixels) box.append(el('p', { class: 'hint', text: '当前仅支持 1K，实际像素随构图调整；暂不提供 2K、4K。' }));
       const ta = el('textarea', { value: d.prompt ?? '', rows: 4, 'aria-label': '图片提示词', placeholder: '描述画面，输入 @ 选择参考图片…' });
       const expandImage = el('button', { type: 'button', class: 'composer-expand', title: '在大窗口中编辑提示词和参考图片', 'aria-pressed': 'false' },
         el('span', { class: 'when-collapsed', text: '放大编辑' }), el('span', { class: 'when-expanded', text: '收起编辑' }));

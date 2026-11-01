@@ -16,7 +16,7 @@ deploy/canvas-web/Caddyfile 服务静态文件，primary-site.caddy 是主站转
 
 CozyClay 修改版及与其结合运行所必需的画布导演台集成按 AGPL 网络源码要求提供对应源码。第三方组件保留各自授权；站点后端及仓库其他组件按已有权利与声明提供，不用一个根许可证声称整库重新授权。程序人物为原创资产，不分发上游 Mixamo 原始文件。运行字体和第三方文本随包保留。
 
-每个运行版本的页脚链接到同目录 source.zip。正式候选需验证源码可重新构建、锁文件完整，且没有真实秘密、用户素材、数据库、日志或机器专属配置。
+每个运行版本的页脚链接到同目录 source.zip。源码包按 frontend/canvas/scripts/build.mjs 的白名单只收 frontend/director、frontend/canvas、能力表和 SOURCE-VERSION.json，足以重新构建导演台；本目录、deploy/canvas-web 与 deploy/canvas-hosted-api 属于站点后端与运维材料，不进包。正式候选需验证源码可重新构建、锁文件完整，且没有真实秘密、用户素材、数据库、日志或机器专属配置。
 
 依赖许可证正文与锁定清单位于导演台 `public/licenses/`。构建会检查清单与两份前端锁文件及正文摘要一致；升级依赖后先复核缺失许可证的官方来源，再运行 `node frontend/director/tools/dependency-notices.mjs` 重新收集。`--verify` 只读验证现有清单。来源与发布者只提供 SPDX 声明的限制随源码保留。
 

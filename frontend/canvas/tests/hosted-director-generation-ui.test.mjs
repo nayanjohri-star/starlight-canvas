@@ -166,6 +166,9 @@ test('V17/V18 actual new-director UI: A/B identity bindings and numbered refs, r
     await openCanvasDock(run.page, 'task');
     const row = run.page.locator(`#task-list .task-item[data-task-id="${accepted.jobId}"]`);
     const queryError = await run.page.waitForFunction(id => window.__xp.taskPeek(id)?.queryError, accepted.jobId); await queryError.dispose();
+    // The task cache updates before the asynchronous task-list render. Wait
+    // for the actual user-visible error, rather than reading the previous row.
+    await row.getByText('查询异常 · 自动重试中', { exact: true }).waitFor();
     assert.match(await row.innerText(), /查询异常/);
     await row.getByRole('button', { name: '继续查询', exact: true }).click();
     const failedTwiceUntil = Date.now() + 10000;

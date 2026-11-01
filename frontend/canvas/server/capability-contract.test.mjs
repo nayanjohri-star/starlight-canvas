@@ -33,7 +33,7 @@ for (const path of REPOSITORY_COPY_PATHS) {
     const copy = await readRepositoryCopy(path, REPO_ROOT);
     const r = classifyRepositoryCopy({ path, copy, pinned: canonical, approved });
     if (r.status === 'fail') assert.fail(r.reason);
-    if (r.status === 'approved-historical' || r.status === 'absent') return t.skip(r.reason);
+    if (r.status === 'approved-historical' || r.status === 'approved-ahead' || r.status === 'absent') return t.skip(r.reason);
     assert.equal(r.status, 'equal');
   });
 }
@@ -62,6 +62,16 @@ test('repository copy policy: same version must be identical; unknown, newer or 
   assert.equal(classifyRepositoryCopy({ path: 'x.json', copy: tampered, pinned, approved: reg }).status, 'fail', '登记哈希不符');
   assert.equal(classifyRepositoryCopy({ path: 'x.json', copy: { version: '2026-09-20.1', models: {} }, pinned, approved: reg }).status, 'fail', '比固定合同新');
   assert.equal(classifyRepositoryCopy({ path: 'x.json', copy: { version: 'next', models: {} }, pinned, approved: reg }).status, 'fail', '未知版本');
+  // 超前副本：只有 relation: "ahead" 且哈希一致的登记项可跳过；历史登记不能放行新版本，超前登记也不能放行旧版本
+  const newer = { version: '2026-09-20.1', models: {} };
+  Object.defineProperty(newer, '__sha256_lf', { value: 'def', enumerable: false });
+  const ahead = [{ path: 'x.json', version: '2026-09-20.1', relation: 'ahead', sha256_lf: 'def', reason: '登记原因' }];
+  assert.equal(classifyRepositoryCopy({ path: 'x.json', copy: newer, pinned, approved: ahead }).status, 'approved-ahead');
+  assert.equal(classifyRepositoryCopy({ path: 'x.json', copy: newer, pinned, approved: [{ ...ahead[0], relation: undefined }] }).status, 'fail', '未标为超前的登记不放行新版本');
+  assert.equal(classifyRepositoryCopy({ path: 'x.json', copy: newer, pinned, approved: [{ ...ahead[0], sha256_lf: undefined }] }).status, 'fail', '超前登记必须有哈希');
+  assert.equal(classifyRepositoryCopy({ path: 'x.json', copy: newer, pinned, approved: [{ ...ahead[0], sha256_lf: 'zzz' }] }).status, 'fail', '超前登记哈希不符');
+  assert.equal(classifyRepositoryCopy({ path: 'y.json', copy: newer, pinned, approved: ahead }).status, 'fail', '超前登记路径不符');
+  assert.equal(classifyRepositoryCopy({ path: 'x.json', copy: old, pinned, approved: [{ ...reg[0], relation: 'ahead' }] }).status, 'fail', '超前登记不放行旧版本');
 });
 
 test('canvas standard prices and model catalogue agree with the customer integration guide', async () => {

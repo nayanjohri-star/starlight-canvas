@@ -5,6 +5,14 @@
 
 // ---- UI 意图 → request metadata.mode（按 family 的画布侧映射，非共享表字段） ----
 // intent: 'text' 纯文字 | 'refs' 素材参考 | 'i2v' 单图 | 'frames' 首尾帧/单首帧 | 'last_frame' 仅尾帧
+// Seedance 形状的族（SD 2.5、SD 2.0、可灵、Muse）纯文字和素材参考都发 references；
+// 首尾帧只在型号能力声明 first_last_frame 时提供（intentsFor 按 capability_modes 过滤）。
+const SEEDANCE_SHAPED_INTENTS = [
+  { intent: 'text', mode: 'references', label: '纯文字' },
+  { intent: 'refs', mode: 'references', label: '素材参考（图/视频/音频）' },
+  { intent: 'frames', mode: 'frames', label: '首尾帧（两张）' },
+];
+export const SEEDANCE_SHAPED_FAMILIES = ['sd25', 'sd20', 'kling', 'muse'];
 export const INTENTS = {
   h3: [
     { intent: 'text', mode: 'text_to_video', label: '纯文字' },
@@ -12,11 +20,7 @@ export const INTENTS = {
     { intent: 'frames', mode: 'frames', label: '首帧 / 首尾帧' },
     { intent: 'last_frame', mode: 'frames', label: '仅尾帧' },
   ],
-  sd25: [
-    { intent: 'text', mode: 'references', label: '纯文字' },
-    { intent: 'refs', mode: 'references', label: '素材参考（图/视频/音频）' },
-    { intent: 'frames', mode: 'frames', label: '首尾帧（两张）' },
-  ],
+  ...Object.fromEntries(SEEDANCE_SHAPED_FAMILIES.map(family => [family, SEEDANCE_SHAPED_INTENTS])),
   wan: [
     { intent: 'text', mode: 'text_to_video', label: '纯文字' },
     { intent: 'i2v', mode: 'image_to_video', label: '单图生成' },
@@ -31,12 +35,19 @@ export const MEDIA_KINDS = ['image', 'video', 'audio'];
 // 表内字段存在时 mediaDurationRule 优先读表，此处仅为表外补充 ----
 export const MEDIA_SECONDS_RULES = { 'minimax-h3-768p-full-slow': { min: 2, max: 15, kind_total: 15 } };
 
+// ---- Wan 1080P 带参考视频时输出最多秒数（与后端一致；共享表尚无此字段） ----
+export const WAN_1080P_REFERENCE_VIDEO_MAX_SECONDS = 15;
+
 // ---- 远端素材宽限：临近过期按无效处理 ----
 export const REMOTE_GRACE_MS = 60 * 1000;
 
-// ---- image2.5 已知的 4 个型号。非 special 的标准价依赖分组基数，未经本站验证 → price=null；
+// ---- 现用线路 C 与兼容旧稿的图片型号。旧非 special 型号未经本站验证 → price=null；
 // standard_estimate 为用户确认过的版本化基线估算（仅预算参考，不是实际分组价/扣费上限） ----
 export const IMAGE25_MODELS = {
+  'gpt-image-2-xp-c': { display_name: 'GPT Image 2 · 线路 C', price: { '1K': 0.03, '2K': 0.06, '4K': 0.09 }, sizes: 'route_c' },
+  'gpt-image-2.5-xp-c': { display_name: 'GPT Image 2.5 · 线路 C', price: { '1K': 0.03, '2K': 0.06, '4K': 0.09 }, sizes: 'route_c' },
+  'gpt-image-2.5-flare-xp-c': { display_name: 'GPT Image 2.5 · Flare · 线路 C', price: { '1K': 0.03 }, sizes: 'route_c', resolutions: ['1K'], variable_pixels: true },
+  'gpt-image-2.5-sunburst-xp-c': { display_name: 'GPT Image 2.5 · Sunburst · 线路 C', price: { '1K': 0.03 }, sizes: 'route_c', resolutions: ['1K'], variable_pixels: true },
   'gpt-image-2.5-flare':            { display_name: 'Image 2.5 · Flare',      price: null, standard_estimate: { '1K': 0.03, '2K': 0.04, '4K': 0.06 }, estimate_version: 'image2.5-baseline-2026-09' },
   'gpt-image-2.5-sunburst':         { display_name: 'Image 2.5 · Sunburst',   price: null, standard_estimate: { '1K': 0.03, '2K': 0.04, '4K': 0.06 }, estimate_version: 'image2.5-baseline-2026-09' },
   'gpt-image-2.5-flare-special':    { display_name: '官转 image2.5 · 速度版',  price: { '1K': 0.06, '2K': 0.08, '4K': 0.11 } },
@@ -49,7 +60,12 @@ export const IMAGE_SIZES = {
   '2K': { '1:1': '2048x2048', '16:9': '2560x1440', '9:16': '1440x2560', '4:3': '2048x1536', '3:4': '1536x2048' },
   '4K': { '16:9': '3840x2160', '9:16': '2160x3840' },
 };
-export const VALID_IMAGE_SIZES = new Set(Object.values(IMAGE_SIZES).flatMap(t => Object.values(t)));
+export const IMAGE_ROUTE_C_SIZES = {
+  '1K': { '1:1': '1024x1024', '3:2': '1536x1024', '2:3': '1024x1536' },
+  '2K': { '1:1': '2048x2048', '16:9': '2048x1152' },
+  '4K': { '16:9': '3840x2160', '9:16': '2160x3840' },
+};
+export const VALID_IMAGE_SIZES = new Set([IMAGE_SIZES, IMAGE_ROUTE_C_SIZES].flatMap(table => Object.values(table).flatMap(t => Object.values(t))));
 
 // ---- 结果图片可信上界（本站合同 ≤3840/边；余量只为挡异常巨图） ----
 export const IMAGE_DECODE_MAX_SIDE = 8192;

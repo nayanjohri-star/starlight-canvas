@@ -8,14 +8,14 @@ import { isExternalProvider, EXTERNAL_IMAGE_SIZES } from './provider-config.js';
 import { getModelCatalog } from './keyvault.js';
 import { outputOf } from './studio-schema.js';
 import {
-  INTENTS, MEDIA_KINDS, MEDIA_SECONDS_RULES, REMOTE_GRACE_MS,
-  IMAGE25_MODELS, IMAGE_SIZES, VALID_IMAGE_SIZES,
+  INTENTS, MEDIA_KINDS, MEDIA_SECONDS_RULES, REMOTE_GRACE_MS, SEEDANCE_SHAPED_FAMILIES, WAN_1080P_REFERENCE_VIDEO_MAX_SECONDS,
+  IMAGE25_MODELS, IMAGE_SIZES, IMAGE_ROUTE_C_SIZES, VALID_IMAGE_SIZES,
   IMAGE_DECODE_MAX_SIDE, IMAGE_DECODE_MAX_PIXELS, IMAGE_RESULT_MAX_BYTES, IMAGE_EDIT_MAX_BYTES, IMAGE_EDIT_MAX_REFERENCES,
   CHAT_NAME_RE, NON_CHAT_NAME_RE,
 } from './capability-rules.js';
 export {
-  INTENTS, MEDIA_KINDS, MEDIA_SECONDS_RULES, REMOTE_GRACE_MS,
-  IMAGE25_MODELS, IMAGE_SIZES, VALID_IMAGE_SIZES,
+  INTENTS, MEDIA_KINDS, MEDIA_SECONDS_RULES, REMOTE_GRACE_MS, SEEDANCE_SHAPED_FAMILIES, WAN_1080P_REFERENCE_VIDEO_MAX_SECONDS,
+  IMAGE25_MODELS, IMAGE_SIZES, IMAGE_ROUTE_C_SIZES, VALID_IMAGE_SIZES,
   IMAGE_DECODE_MAX_SIDE, IMAGE_DECODE_MAX_PIXELS, IMAGE_RESULT_MAX_BYTES, IMAGE_EDIT_MAX_BYTES, IMAGE_EDIT_MAX_REFERENCES,
   CHAT_NAME_RE, NON_CHAT_NAME_RE,
 } from './capability-rules.js';
@@ -70,6 +70,7 @@ export function fileMaxBytes(kind) { const u = UPLOAD_LIMITS(); return u ? u[kin
 // 型号级素材介质限制（能力表可选字段 media_max_bytes / media_content_types）。
 // mediaLimitSummary(modelId) → {image,video,audio:{maxBytes:number|null,contentTypes:string[]|null}}；
 // 型号未声明任何介质限制 → null。供 UI 提示与提交前预检共用。
+// contentTypes 只列画布能上传的格式：型号另外支持、但画布传不了的格式（如满参慢速版的 MOV）不列出。
 export function mediaLimitSummary(modelId) {
   const m = getModel(modelId);
   if (!m) return null;
@@ -77,7 +78,9 @@ export function mediaLimitSummary(modelId) {
   let any = false;
   for (const k of MEDIA_KINDS) {
     const max = m.media_max_bytes?.[k], types = m.media_content_types?.[k];
-    out[k] = { maxBytes: Number.isFinite(max) ? max : null, contentTypes: Array.isArray(types) ? types.slice() : null };
+    const uploadable = UPLOAD_LIMITS()?.[k]?.content_types;
+    const listed = Array.isArray(types) ? (Array.isArray(uploadable) ? types.filter(t => uploadable.includes(t)) : types.slice()) : null;
+    out[k] = { maxBytes: Number.isFinite(max) ? max : null, contentTypes: listed };
     if (out[k].maxBytes != null || out[k].contentTypes != null) any = true;
   }
   return any ? out : null;
@@ -192,6 +195,10 @@ export function validateDraft(modelId, draft, refs, frames, wireProblems = [], p
     if (nImg > lim.image || nVid > lim.video || nAud > lim.audio) return '素材数量超过该型号分项上限';
     if (refs.length > lim.total) return `素材合计超过 ${lim.total} 上限`;
     if (m.family === 'h3' && !m.supports_audio_only && nAud > 0 && nImg + nVid === 0) return 'H3 音频参考需要同时带图片或视频';
+    if (m.family === 'wan' && nAud > 0 && nImg + nVid === 0) return 'Wan 音频参考需要同时带图片或视频';
+    if (m.audio_requires_image === true && nAud > 0 && nImg === 0) return '该型号的参考音频必须搭配参考图片';
+    if (m.family === 'wan' && String(m.resolution).toLowerCase() === '1080p' && nVid > 0 && seconds > WAN_1080P_REFERENCE_VIDEO_MAX_SECONDS)
+      return `Wan 1080P 带参考视频时时长最多 ${WAN_1080P_REFERENCE_VIDEO_MAX_SECONDS} 秒`;
   }
   if (intent === 'i2v') {
     if (m.family !== 'wan') return '该型号不支持单图模式';
@@ -306,10 +313,11 @@ export const imageModelIds = () => {
 export const getImageModel = id => getProvider().protocol === 'openai'
   ? imageModelIds().includes(id) ? { id, display_name: id, external: true } : null : IMAGE25_MODELS[id] ?? null;
 
-const imageSizes = () => getProvider().protocol === 'openai' ? EXTERNAL_IMAGE_SIZES : IMAGE_SIZES;
-export const imageResolutions = () => Object.keys(imageSizes());
-export const imageRatios = resolution => Object.keys(imageSizes()[resolution] ?? {});
-export const imageSizeFor = (resolution, ratio) => imageSizes()[resolution]?.[ratio] ?? null;
+const imageSizesForModel = modelId => getProvider().protocol === 'openai' ? EXTERNAL_IMAGE_SIZES
+  : getImageModel(modelId)?.sizes === 'route_c' ? IMAGE_ROUTE_C_SIZES : IMAGE_SIZES;
+export const imageResolutions = modelId => getImageModel(modelId)?.resolutions ?? Object.keys(imageSizesForModel(modelId));
+export const imageRatios = (resolution, modelId) => imageResolutions(modelId).includes(resolution) ? Object.keys(imageSizesForModel(modelId)[resolution] ?? {}) : [];
+export const imageSizeFor = (resolution, ratio, modelId) => imageResolutions(modelId).includes(resolution) ? imageSizesForModel(modelId)[resolution]?.[ratio] ?? null : null;
 
 // 返回 ¥/张；无可靠标准价 → null（UI 标注「标准价未验证」）
 export function estimateImageYuan(modelId, resolution) {
@@ -479,8 +487,8 @@ export function buildImageBody({ model, prompt, size } = {}) {
   if (typeof size !== 'string' || !/^\d{3,5}x\d{3,5}$/.test(size)) throw new Error('尺寸不合法');
   const [w, h] = size.split('x').map(Number);
   if (!w || !h || w > 3840 || h > 3840) throw new Error('边长超过 3840 上限');
-  const valid = getProvider().protocol === 'openai' ? new Set(Object.values(EXTERNAL_IMAGE_SIZES['1K'])) : VALID_IMAGE_SIZES;
-  if (!valid.has(size)) throw new Error('尺寸不在当前接口支持范围');
+  if (!imageResolutions(model).some(resolution => Object.values(imageSizesForModel(model)[resolution] ?? {}).includes(size)))
+    throw new Error(getProvider().protocol === 'openai' ? '尺寸不在当前接口支持范围' : '尺寸不在该型号支持范围');
   return JSON.stringify({ model, prompt, size, n: 1, response_format: 'b64_json' });
 }
 export function buildImageEditBody({ model, prompt, size, imageDataUrl, imageDataUrls } = {}) {

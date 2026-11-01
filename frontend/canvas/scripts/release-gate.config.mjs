@@ -101,12 +101,14 @@ export async function loadSkipAllowlist() {
   return approved.map(a => {
     const copy = { version: a.version };
     Object.defineProperty(copy, '__sha256_lf', { value: a.sha256_lf, enumerable: false });
-    const r = classifyRepositoryCopy({ path: a.path, copy, pinned: { version: '9999-12-31.1' }, approved: [a] });
+    // 原因文本不含固定合同版本，这里的固定版本只需让副本落在登记的一侧：历史副本取最大值，超前副本取最小值
+    const ahead = a.relation === 'ahead';
+    const r = classifyRepositoryCopy({ path: a.path, copy, pinned: { version: ahead ? '0001-01-01.1' : '9999-12-31.1' }, approved: [a] });
     return {
       file: 'server/capability-contract.test.mjs',
       test: `repository copy ${a.path} equals the pinned contract or is an approved historical copy`,
       reason: r.reason,
-      why: '已登记历史副本策略（contracts/approved-copies.json）',
+      why: ahead ? '已登记超前副本策略（contracts/approved-copies.json）' : '已登记历史副本策略（contracts/approved-copies.json）',
     };
   });
 }

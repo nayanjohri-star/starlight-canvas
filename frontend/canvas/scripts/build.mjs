@@ -25,9 +25,16 @@ const MODE = argOf('--mode') ?? process.env.CANVAS_BUILD_MODE ?? 'local';
 const DIST = resolve(argOf('--out') ?? process.env.CANVAS_BUILD_OUT ?? join(root, MODE === 'hosted' ? 'dist-hosted' : 'dist'));
 // 托管产物不含只属于本机形态的文件（导演台宿主 SDK）
 const LOCAL_ONLY = new Set(['__hub-sdk__.js']);
+const REPO_ROOT = resolve(root, '../..');
 const CAPABILITY_SOURCE = resolve(root, '../../docs/星盘AI_视频模型能力表.json');
 // 构建后生成的身份文件：不参与 contentHash（它们描述内容，不是内容本身）
 export const GENERATED_IDENTITY = new Set(['build.json', 'build-info.js']);
+// 导演台页脚“Source code (AGPL)”下载的公开源码包 director/source.zip 只收白名单：
+// AGPL 修改版导演台、与它结合运行并负责构建它的画布宿主，以及构建用的能力表（另加 SOURCE-VERSION.json）。
+// 这些足以重新构建、安装和修改导演台。托管 API、部署配置、兼容补丁与运维文档属于站点后端，
+// 不是导演台的对应源码，且写有内部线路信息，不得进包。
+export const SOURCE_ARCHIVE_DIRS = Object.freeze(['frontend/director', 'frontend/canvas']);
+export const SOURCE_ARCHIVE_CAPABILITY = 'docs/星盘AI_视频模型能力表.json';
 
 async function copyDir(from, to) {
   await mkdir(to, { recursive: true });
@@ -65,6 +72,24 @@ async function sourceFiles(dir) {
     return out.sort();
   };
   return walk(dir);
+}
+// 公开源码包的成员（不含 SOURCE-VERSION.json，它由构建身份生成）
+export async function sourceArchiveEntries(repoRoot = REPO_ROOT) {
+  const entries = [];
+  for (const dir of SOURCE_ARCHIVE_DIRS) {
+    const directory = join(repoRoot, dir);
+    for (const file of await sourceFiles(directory)) {
+      if (dir === 'frontend/director' && file.startsWith('public/fonts/unicode-local/')) continue; // rebuilt from the licensed font input, including in Git-free source builds
+      if (/(^|\/)(node_modules|dist|dist-hosted|\.vite|\.git|\.release-evidence|_temp|outputs|logs|test-results|release-packages|playwright-report)(\/|$)/.test(file) ||
+          /(^|\/)(\.env|cookies|secrets|sessions)(\.|\/|$)/i.test(file) || /\.(key|pem|pfx|har|dump|tgz|bak)$/i.test(file)) continue;
+      const data = await readFile(join(directory, file)).catch(error => error.code === 'ENOENT' ? null : Promise.reject(error));
+      if (data) entries.push({ name: `${dir}/${file}`, data: new Uint8Array(normalizedText(file, data)) });
+    }
+  }
+  // The source archive also carries the fixed contract used by the canvas build.
+  const capability = join(repoRoot, SOURCE_ARCHIVE_CAPABILITY);
+  entries.push({ name: SOURCE_ARCHIVE_CAPABILITY, data: new Uint8Array(normalizedText(capability, await readFile(capability))) });
+  return entries;
 }
 const TEXT_EXT = /(?:\.(?:js|mjs|cjs|jsx|ts|tsx|css|html|json|svg|txt|md|py|yml|yaml|toml|ps1|sh|caddy|go|patch|obj|usda|otio)|\.env\.example|(?:^|\/)(?:LICENSE[^/]*|NOTICE[^/]*|Caddyfile(?:\.[^/]+)?|Dockerfile(?:\.[^/]+)?|\.gitignore))$/i;
 export function normalizedText(path, bytes) {
@@ -134,21 +159,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     { cwd: DIRECTOR_ROOT, encoding: 'utf8', windowsHide: true });
   if (bundledFonts.status !== 0) throw new Error(`导演台字体产物校验失败：${bundledFonts.stderr || bundledFonts.stdout}`);
   await copyDir(join(DIRECTOR_ROOT, 'dist'), join(DIST, 'director'));
-  const sourceEntries = [];
-  for (const [directory, prefix] of [[DIRECTOR_ROOT, 'frontend/director/'], [root, 'frontend/canvas/'],
-    [resolve(root, '../../deploy/canvas-web'), 'deploy/canvas-web/'],
-    [resolve(root, '../../deploy/canvas-hosted-api'), 'deploy/canvas-hosted-api/'],
-    [resolve(root, '../../docs/director'), 'docs/director/']]) {
-    for (const file of await sourceFiles(directory)) {
-      if (directory === DIRECTOR_ROOT && file.startsWith('public/fonts/unicode-local/')) continue; // rebuilt from the licensed font input, including in Git-free source builds
-      if (/(^|\/)(node_modules|dist|dist-hosted|\.vite|\.git|\.release-evidence|_temp|outputs|logs|test-results|release-packages|playwright-report)(\/|$)/.test(file) ||
-          /(^|\/)(\.env|cookies|secrets|sessions)(\.|\/|$)/i.test(file) || /\.(key|pem|pfx|har|dump|tgz|bak)$/i.test(file)) continue;
-      const data = await readFile(join(directory, file)).catch(error => error.code === 'ENOENT' ? null : Promise.reject(error));
-      if (data) sourceEntries.push({ name: prefix + file, data: new Uint8Array(normalizedText(file, data)) });
-    }
-  }
-  // The source archive also carries the fixed contract used by the canvas build.
-  sourceEntries.push({ name: 'docs/星盘AI_视频模型能力表.json', data: new Uint8Array(normalizedText(CAPABILITY_SOURCE, await readFile(CAPABILITY_SOURCE))) });
+  const sourceEntries = await sourceArchiveEntries();
   sourceEntries.push({ name: 'SOURCE-VERSION.json', data: new TextEncoder().encode(JSON.stringify({
     sourceCommit, sourceDirty: dirty, builtAt,
     cozyclay: JSON.parse(await readFile(join(DIRECTOR_ROOT, 'UPSTREAM.json'), 'utf8')).commit,

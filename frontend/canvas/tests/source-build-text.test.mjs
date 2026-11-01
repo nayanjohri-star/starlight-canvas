@@ -11,14 +11,9 @@ import { buildZip } from '../../director/src/zip-store.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 // Actual source.zip members that differed between the clean Windows 639b
-// artifact and the same commit's raw Git archive on 2026-10-01.
-const FULL_TEXT_MEMBERS = [
-  'deploy/canvas-hosted-api/Caddyfile.session-staging',
-  'deploy/canvas-hosted-api/production-staging.go',
-  'deploy/canvas-web/Dockerfile.gateway-compat',
-  'deploy/canvas-web/Dockerfile.new-api-compat',
-  'deploy/canvas-web/Dockerfile.portal-compat',
-  'deploy/canvas-web/canvas-web.env.example',
+// artifact and the same commit's raw Git archive on 2026-10-01. The deploy/
+// members of that list left the archive with its whitelist (see build.mjs).
+const TEXT_MEMBERS = [
   'frontend/canvas/tests/hosted-ci/Caddyfile.primary',
   ...['giant', 'tiny', 'unit'].flatMap(size => ['fbx', 'obj'].map(ext =>
     `frontend/director/test/fixtures/${size}-cube.${ext}`)),
@@ -26,12 +21,6 @@ const FULL_TEXT_MEMBERS = [
   'frontend/director/test/snapshots/courtyard-cut-list.otio',
   'frontend/director/tools/morphgs/patches/preprocess_src-none-mode.patch',
 ];
-const sourceIdentity = await readFile(join(ROOT, 'SOURCE-VERSION.json'), 'utf8').then(JSON.parse).catch(() => null);
-const community = sourceIdentity?.kind === 'canvas-open-source-candidate';
-// Community packages deliberately omit production deployment overlays. Keep
-// the same byte/hash assertions for all ten actual community source members;
-// the production repository still exercises all sixteen original members.
-const TEXT_MEMBERS = community ? FULL_TEXT_MEMBERS.filter(p => !p.startsWith('deploy/')) : FULL_TEXT_MEMBERS;
 const lf = bytes => Buffer.from(bytes.toString('utf8').replace(/\r\n?/g, '\n'), 'utf8');
 const endings = (bytes, ending) => Buffer.from(lf(bytes).toString('utf8').replace(/\n/g, ending), 'utf8');
 
@@ -56,9 +45,8 @@ async function graph(root, entries) {
   return { zip, hash: await distContentHash(root) };
 }
 
-test(`source text: all ${TEXT_MEMBERS.length} packaged real members canonicalize LF, CRLF and CR identically`, async () => {
-  assert.equal(FULL_TEXT_MEMBERS.length, 16);
-  assert.equal(TEXT_MEMBERS.length, community ? 10 : 16);
+test('source text: all 10 real members canonicalize LF, CRLF and CR identically', async () => {
+  assert.equal(TEXT_MEMBERS.length, 10);
   for (const name of TEXT_MEMBERS) {
     const original = await readFile(join(ROOT, name));
     for (const ending of ['\n', '\r\n', '\r'])

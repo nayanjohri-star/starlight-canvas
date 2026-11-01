@@ -9,6 +9,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { chromium, createCanvasServer, ROOT, setKey, makeState, mockUpstream, MP4, realPng, CHROME } from './e2e-helpers.mjs';
+import { IMAGE25_MODELS } from '../src/capability-rules.js';
 
 test('升级验收：模块接线/抽屉/模板/工作流/粘贴让位（1440·768·390，全模拟上游）', { timeout: 120000 }, async t => {
   const state = makeState();
@@ -109,7 +110,8 @@ test('升级验收：模块接线/抽屉/模板/工作流/粘贴让位（1440·7
   // 密钥目录全量入库：图片/文本型号表按 /v1/models 如实标可用性（mock 只回 11 个视频型号）
   if (status.generators?.ok) {
     const ims = await page.evaluate(() => window.__xp.generators.imageModels().map(m => ({ id: m.id, usable: m.usable })));
-    assert.equal(ims.length, 4, '图片型号表恒为 4 项');
+    // 图片型号表列出 IMAGE25_MODELS 的全部型号（10-25 线上基线由 4 个增至 8 个），不写死数量
+    assert.equal(ims.length, Object.keys(IMAGE25_MODELS).length, '图片型号表＝IMAGE25_MODELS 全部型号');
     assert.ok(ims.every(m => m.usable === false), 'mock 密钥未返回图片型号 → 如实标不可用');
     assert.ok(Array.isArray(await page.evaluate(() => window.__xp.generators.textModels())), '文本型号目录可查');
   }

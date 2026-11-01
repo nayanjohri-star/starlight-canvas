@@ -1,8 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {join} from 'node:path';
+import {readFileSync} from 'node:fs';
 import {chromium,createCanvasServer,ROOT,CHROME,SHOTS,makeState,mockUpstream,MP4,realPng,addAsset,setKey,downloadCurrent} from './e2e-helpers.mjs';
 import {installDirectorAssemblyFixture,assertHostedDirectorEntry} from './legacy-director-fixture.mjs';
+
+// 型号数与单价以能力表为准：上架新型号或调价不必改这里。
+const capabilityTable=JSON.parse(readFileSync(join(ROOT,'../../docs/星盘AI_视频模型能力表.json'),'utf8').replace(/^\uFEFF/,''));
+const wanFiveSeconds=(capabilityTable.models['wan-3.0'].price_cny_per_second*5).toFixed(2);
 
 test('圆润 V2：真实素材引用、单次模拟生成、新版本保护、双主题桌面与模块入口', {timeout:150000}, async t=>{
  const state=makeState();state.videoBytes=new Uint8Array(MP4);
@@ -24,14 +29,14 @@ test('圆润 V2：真实素材引用、单次模拟生成、新版本保护、�
   x.board.select('node',n.id);return n.id;
  },[a.nodeId,b.nodeId]);
  const model=page.getByLabel('视频生成型号');
- assert.equal(await model.locator('option').count(),13,'所有已接入型号仍可选择或显示明确的分组限制');
+ assert.equal(await model.locator('option').count(),Object.keys(capabilityTable.models).length,'所有已接入型号仍可选择或显示明确的分组限制');
  await model.selectOption('wan-3.0');await page.getByLabel('生成模式').selectOption('refs');
  await page.getByLabel('生成时长（秒）').fill('5');
  const prompt=page.locator('#inspector textarea');await prompt.fill('清晨沿海岸向灯塔缓慢推进，保持主体一致。');
  await page.getByRole('button',{name:'插入引用 @图片1 海岸参考.png',exact:true}).click();
  assert.match(await prompt.inputValue(),/@图片1/);
  assert.equal(await page.locator('.ref-thumbs img').count(),2);
- assert.match(await page.locator('#inspector .cost').innerText(),/2\.25/);
+ assert.ok((await page.locator('#inspector .cost').innerText()).includes(wanFiveSeconds),`费用按能力表单价：${wanFiveSeconds}`);
  assert.equal(state.creates.length,0,'编辑与引用操作不自动生成');
  await page.getByRole('button',{name:/^(上传并)?提交生成$/}).click();
  await page.waitForFunction(id=>window.__xp.store.node(id)?.data.run?.taskId,gen);

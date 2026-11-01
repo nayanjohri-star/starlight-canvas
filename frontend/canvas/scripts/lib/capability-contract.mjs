@@ -67,7 +67,8 @@ export function tableModelAsContract(table, target) {
     supports_face_mode: target.switches?.face_mode,
     prompt_max_characters: target.prompt_max_characters,
     billing_unit: target.billing_unit ?? table.billing_unit,
-    ...Object.fromEntries(['allowed_seconds', 'supports_audio_only', 'supports_last_frame_only', 'media_max_bytes', 'media_content_types']
+    ...Object.fromEntries(['allowed_seconds', 'supports_audio_only', 'supports_last_frame_only', 'media_max_bytes', 'media_content_types',
+      'prompt_required', 'audio_requires_image']
       .filter(k => target[k] !== undefined).map(k => [k, target[k]])),
   };
 }
@@ -94,8 +95,10 @@ export function compareTableToContract(table, contract) {
 
 // 仓库中其他合同副本（后端 / Portal / 网关）的处理策略：
 //  · 与固定合同同版本 → 必须逐项相等，否则失败；
-//  · 版本不同 → 只有在 contracts/approved-copies.json 中登记了「路径 + 版本 + 原因」的历史副本才可跳过；
-//  · 未登记、未知或比固定合同更新的版本 → 失败，要求显式处理（更新固定合同或登记）。
+//  · 版本较旧 → 只有在 contracts/approved-copies.json 中登记了「路径 + 版本 + 原因」的历史副本才可跳过；
+//  · 版本更新 → 默认失败（须先更新固定合同）；只有登记为 relation: "ahead" 且「路径 + 版本 + 哈希 + 原因」齐全的
+//    超前副本才可跳过：某个服务已上线、站点合同（及画布）尚未采纳的扩展，哈希必填，副本再改即失败；
+//  · 未登记或未知版本 → 失败，要求显式处理（更新固定合同或登记）。
 export async function loadApprovedCopies(canvasRoot = CANVAS_ROOT) {
   const raw = JSON.parse(stripBom(await readFile(join(canvasRoot, 'contracts', 'approved-copies.json'), 'utf8')));
   return Array.isArray(raw.copies) ? raw.copies : [];
@@ -110,8 +113,14 @@ export function classifyRepositoryCopy({ path, copy, pinned, approved }) {
   let order;
   try { order = compareContractVersions(copy.version, pinned.version); }
   catch (e) { return { status: 'fail', reason: `${path}：${e.message}` }; }
-  if (order > 0) return { status: 'fail', reason: `${path} 为 ${copy.version}，比固定合同 ${pinned.version} 更新：须先更新固定合同` };
-  const entry = approved.find(a => a.path === path && a.version === copy.version);
+  if (order > 0) {
+    const ahead = approved.find(a => a.path === path && a.version === copy.version && a.relation === 'ahead');
+    if (!ahead) return { status: 'fail', reason: `${path} 为 ${copy.version}，比固定合同 ${pinned.version} 更新：须先更新固定合同` };
+    if (!ahead.sha256_lf || ahead.sha256_lf !== copy.__sha256_lf)
+      return { status: 'fail', reason: `${path} 已登记的超前副本 ${copy.version} 哈希缺失或不符` };
+    return { status: 'approved-ahead', reason: `${path} 为已登记的超前副本 ${copy.version}：${ahead.reason}` };
+  }
+  const entry = approved.find(a => a.path === path && a.version === copy.version && a.relation !== 'ahead');
   if (!entry) return { status: 'fail', reason: `${path} 为旧版本 ${copy.version}，未在 contracts/approved-copies.json 登记` };
   if (entry.sha256_lf && entry.sha256_lf !== copy.__sha256_lf)
     return { status: 'fail', reason: `${path} 已登记的 ${copy.version} 副本哈希不符` };

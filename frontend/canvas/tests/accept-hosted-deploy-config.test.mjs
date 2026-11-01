@@ -13,7 +13,7 @@ const compose = read('deploy/canvas-web/compose.canvas-web.yaml');
 const envExample = read('deploy/canvas-web/canvas-web.env.example');
 const snippet = read('deploy/canvas-web/primary-site.caddy');
 const adapter = read('deploy/canvas-hosted-api/server.mjs');
-const production = read('deploy/production/Caddyfile');
+const production = read('deploy/canvas-web/upstream-routing.caddy.example');
 const workflow = read('.github/workflows/canvas-05-strict-gate.yml');
 
 test('compose 中适配层的三个上游分别来自独立的必填变量，并与适配层读取的环境变量一致', () => {
@@ -51,4 +51,13 @@ test('CI 真实拓扑按同样的变量名启动适配层，并把视频上游�
   assert.match(job, /NEW_API_URL="http:\/\/127\.0\.0\.1:\$\{BACKEND_PORT\}"/);
   assert.match(job, /VIDEO_API_URL="http:\/\/127\.0\.0\.1:\$\{GATEWAY_PORT\}"/);
   assert.match(job, /CANVAS_HOSTED_GATEWAY_PORT/);
+});
+
+test('部署模板为图片任务保留持久目录、每账号名额和独立内存预算', () => {
+  assert.match(compose, /CANVAS_IMAGE_MAX_ACTIVE_PER_USER: .*:-20/);
+  assert.match(compose, /CANVAS_IMAGE_BODY_BUDGET_BYTES: .*:-134217728/);
+  assert.match(compose, /CANVAS_IMAGE_JOBS_DIR: \/data\/image-jobs/);
+  assert.match(compose, /CANVAS_IMAGE_JOBS_HOST_DIR:.*:\/data\/image-jobs/);
+  assert.match(compose, /image-jobs\.mjs:\/app\/image-jobs\.mjs:ro/);
+  assert.match(compose, /mem_limit: 768m/);
 });

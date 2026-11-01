@@ -25,11 +25,11 @@ const IDEM_WINDOW_MS = 24 * 3600 * 1000;
 // stage 仅展示不判终态：accepted→finalizing_* 均非终态；终态只看 status
 const STAGE_LABEL = {
   accepted: '已受理', preparing: '准备中', queued: '排队中', running: '生成中',
-  switching: '切换渠道', reconciling: '核对结果', needs_review: '待复核',
+  switching: '重新分配', reconciling: '核对结果', needs_review: '待复核',
   delivering: '交付中', finalizing_success: '收尾中', finalizing_failure: '收尾中',
   succeeded: '已成功', failed: '已失败', cancelled: '已取消',
   prepare_retry: '恢复素材准备', prepare_fault: '素材准备待处理', sending: '提交中',
-  upstream_running: '生成中', submit_uncertain: '核对提交结果', upstream_not_found: '核对上游任务',
+  upstream_running: '生成中', submit_uncertain: '核对提交结果', upstream_not_found: '核对任务',
   send_lease_expired: '核对提交结果', awaiting_delivery: '视频交付中', delivery_fault: '恢复视频交付',
   cost_unknown: '待复核', no_candidates: '待复核', candidates_exhausted: '收尾中',
   cancelled_pre_send: '取消处理中', done: '已完成',
@@ -82,9 +82,10 @@ export function mediaLimitsHint(m, modelId) {
   for (const k of MEDIA_KINDS) {
     if (!Number.isFinite(mb[k])) continue;
     let s = `${KIND_SHORT[k]}≤${Math.round(mb[k] / 1e6)}MB`;
-    const types = m.media_content_types?.[k];
     const globalTypes = UPLOAD_LIMITS()?.[k]?.content_types ?? [];
-    if (Array.isArray(types) && types.length && types.length < globalTypes.length) s += `（仅 ${extList(types)}）`;
+    // 只看画布能上传的格式：型号多支持的格式（如满参慢速版的 MOV）画布传不了，不能抵消收窄
+    const types = (m.media_content_types?.[k] ?? []).filter(t => globalTypes.includes(t));
+    if (Array.isArray(m.media_content_types?.[k]) && types.length && types.length < globalTypes.length) s += `（仅 ${extList(types)}）`;
     parts.push(s);
   }
   if (!parts.length) return null;
@@ -526,7 +527,7 @@ export function createTaskRunner({ store, storage, api, assets, onUpdate, submit
         // R09：以「收到响应时刻」持久化的 retryNotBefore 为准；旧记录回退到 lastSubmitAt+retryAfterMs
         const notBefore = rec.retryNotBefore ?? (Number.isFinite(rec.retryAfterMs) && rec.lastSubmitAt ? rec.lastSubmitAt + rec.retryAfterMs : 0);
         if (notBefore && Date.now() < notBefore) {
-          toast(`上游要求等待，请 ${Math.ceil((notBefore - Date.now()) / 1000)} 秒后重试`, 'warn'); return;
+          toast(`服务要求等待，请 ${Math.ceil((notBefore - Date.now()) / 1000)} 秒后重试`, 'warn'); return;
         }
         if (isCurrent()) await doCreate(rec);
       });
@@ -890,7 +891,7 @@ export function createTaskRunner({ store, storage, api, assets, onUpdate, submit
       const rec = await recOf(taskId);
       if (!rec || rec.projectId !== store.project?.id) return;
       if (!isSupportedTaskRecord(rec)) { toast('任务记录版本高于当前客户端，已停止改写', 'err'); return; }
-      if (rec.executorVersion !== 2) { toast('该任务不是多渠道 v2 任务，保持「停止等待」即可', 'warn'); return; }
+      if (rec.executorVersion !== 2) { toast('该任务不支持停止后续尝试，保持「停止等待」即可', 'warn'); return; }
       if (isSettled(rec)) { toast('任务已进入终态', 'warn'); return; }
       if (rec.cancelRequested) { toast('已请求停止后续尝试，按任务状态继续跟踪', 'warn'); return; }
       if (!canQueryTask(rec)) { rec.paused = true; await putRec(rec, ['paused']); toast('当前账户与任务不一致，已暂停查询', 'warn'); return; }
@@ -903,7 +904,7 @@ export function createTaskRunner({ store, storage, api, assets, onUpdate, submit
       delete rec.cancelInFlight;
       await putRec(rec, QUERY_FIELDS);
       if (!isSettled(rec)) poll(taskId, rec.projectId);
-      toast('已请求停止后续尝试；当前上游仍可能完成，若可交付成功仍按原价收费', 'ok', 6000);
+      toast('已请求停止后续尝试；当前任务仍可能完成，若可交付成功仍按原价收费', 'ok', 6000);
     } catch (e) {
       const rec = await recOf(taskId).catch(() => null);
       if (rec) delete rec.cancelInFlight;
@@ -1331,15 +1332,31 @@ export function applyModelSwitch(d, modelId) {
   return d.draft;
 }
 
+// 只补缺省字段，不替换草稿对象：重建检查器不应改变草稿本身（键顺序、引用都保持不变）。
+// 未填时长按所选型号公布的默认时长（H3 15 秒、SD 4 秒、可灵/Muse/Wan 5 秒），与后端计费一致。
+export function fillDraftDefaults(d) {
+  if (!d.draft || typeof d.draft !== 'object') d.draft = {};
+  const draftDefaults = { model: 'minimax-h3-768p-per-second', intent: 'text', ratio: '16:9', prompt: '', switches: { generate_audio: true, face_mode: false } };
+  for (const [k, v] of Object.entries(draftDefaults)) if (d.draft[k] === undefined) d.draft[k] = v;
+  if (!getModel(d.draft.model)) d.draft.model = 'minimax-h3-768p-per-second';
+  if (d.draft.seconds === undefined) d.draft.seconds = getModel(d.draft.model)?.seconds?.default ?? 15;
+  d.perModel ??= {};
+  return d.draft;
+}
+
+// 型号下拉按型号族分组；能力表里出现的其他族排在后面，不会漏掉型号。
+const FAMILY_LABELS = { h3: 'H3（视频专线）', sd25: 'SD 2.5', sd20: 'SD 2.0', kling: '可灵 Kling', muse: 'Muse', wan: 'Wan' };
+export function modelFamilyGroups(ids = modelIds()) {
+  const order = Object.keys(FAMILY_LABELS);
+  const rank = family => (order.indexOf(family) + 1) || order.length + 1;
+  const families = [...new Set(ids.map(id => getModel(id)?.family).filter(Boolean))].sort((a, b) => rank(a) - rank(b));
+  return families.map(family => ({ family, label: FAMILY_LABELS[family] ?? family, ids: ids.filter(id => getModel(id)?.family === family) }));
+}
+
 export function genInspector(node, ctx) {
   const { store, runner, refresh, assets, onDuplicate, editor, generators } = ctx;
   const d = node.data;
-  // 只补缺省字段，不替换草稿对象：重建检查器不应改变草稿本身（键顺序、引用都保持不变）
-  if (!d.draft || typeof d.draft !== 'object') d.draft = {};
-  const draftDefaults = { model: 'minimax-h3-768p-per-second', intent: 'text', seconds: 15, ratio: '16:9', prompt: '', switches: { generate_audio: true, face_mode: false } };
-  for (const [k, v] of Object.entries(draftDefaults)) if (d.draft[k] === undefined) d.draft[k] = v;
-  if (!getModel(d.draft.model)) d.draft.model = 'minimax-h3-768p-per-second';
-  d.perModel ??= {};
+  fillDraftDefaults(d);
   const wrap = el('div', {});
   function rerender() { wrap.replaceChildren(build()); }
 
@@ -1451,10 +1468,9 @@ export function genInspector(node, ctx) {
 
     // ---- 参数 ----
     const sel = el('select', { value: d.draft.model, 'aria-label': '视频生成型号' });
-    const famLabel = { h3: 'H3（视频专线）', sd25: 'SD 2.5', wan: 'Wan' };
-    for (const fam of ['h3', 'sd25', 'wan']) {
-      const g = el('optgroup', { label: famLabel[fam] });
-      for (const id of modelIds().filter(id => getModel(id).family === fam)) {
+    for (const group of modelFamilyGroups()) {
+      const g = el('optgroup', { label: group.label });
+      for (const id of group.ids) {
         const usable = isModelUsable(id);
         g.append(el('option', { value: id, text: `${getModel(id).display_name} · ¥${getModel(id).billing_unit === 'request' ? getModel(id).price_cny_per_request : getModel(id).price_cny_per_second}/${getModel(id).billing_unit === 'request' ? '次' : '秒'}${usable ? '' : '（当前密钥不可用）'}`, selected: id === d.draft.model, disabled: !usable }));
       }
@@ -1652,7 +1668,7 @@ export function genInspector(node, ctx) {
         if (canRequestCancel(rec)) {
           const cancel = el('button', { type: 'button', text: '停止后续尝试' });
           cancel.addEventListener('click', async () => {
-            const ok = await confirmDialog('停止后续渠道尝试？', el('p', { text: '将停止后续渠道尝试；当前上游可能仍会生成，若最终可交付成功仍按原价收费，取消不保证立即退款。' }));
+            const ok = await confirmDialog('停止后续尝试？', el('p', { text: '将停止后续尝试；当前任务可能仍会继续生成，若最终可交付成功仍按原价收费，取消不保证立即退款。' }));
             if (ok) await runner.cancelTask(node);
             refresh();
           });

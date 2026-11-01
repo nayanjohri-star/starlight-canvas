@@ -65,6 +65,9 @@ test('独立浏览器复审：用真实鼠标右键连线能打开连线菜单',
  const menu=page.locator('.popup').getByRole('menuitem',{name:/删除连线/});await menu.waitFor({timeout:2000});
  assert.equal(await menu.count(),1);await menu.click();
  assert.equal(await page.evaluate(id=>window.__xp.store.project.edges.some(e=>e.id===id),edgeId),false,'菜单确实删除所选连线');
+ assert.equal(await page.locator('#overlay-root > *').count(),0,'关闭连线菜单后，常驻编辑控件不应占据弹窗层');
  await page.keyboard.press('Control+z');
  assert.equal(await page.evaluate(id=>window.__xp.store.project.edges.some(e=>e.id===id),edgeId),true,'误删连线能够撤销恢复');
+ await page.keyboard.press('Control+Shift+z');
+ assert.equal(await page.evaluate(id=>window.__xp.store.project.edges.some(e=>e.id===id),edgeId),false,'重做仍可删除同一连线');
 });

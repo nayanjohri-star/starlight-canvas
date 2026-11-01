@@ -46,12 +46,18 @@ test('SD refs 携带三类素材数组 + 显式开关', () => {
   assert.equal(body.metadata.generate_audio, true);
 });
 
-test('Wan 单图模式恰一图；omni 保留显式 false', () => {
+test('Wan 单图模式恰一图；有声音开关的型号保留显式 false', () => {
   assert.match(validateDraft('wan-3.0', draft({ intent: 'i2v', seconds: 5 }), [img(), vid()], []), /一张图片/);
   assert.equal(validateDraft('wan-3.0', draft({ intent: 'i2v', seconds: 5 }), [img()], []), '');
   const body = JSON.parse(buildCreateBody('wan-3.0-prime', draft({ intent: 'refs', seconds: 5, switches: { generate_audio: false } }), [img(), img()], []));
   assert.equal(body.metadata.mode, 'omni_reference');
-  assert.equal(body.metadata.generate_audio, false, '显式 false 必须保留');
+  // Wan 新合同：声音不能关闭，不开放开关；显式 false 也不发送（后端会拒收 false）
+  assert.ok(!('generate_audio' in body.metadata), 'Wan 不发送声音开关');
+  const kling = JSON.parse(buildCreateBody('kling-v4-720p', draft({ intent: 'refs', seconds: 5, switches: { generate_audio: false } }), [img()], []));
+  assert.equal(kling.metadata.mode, 'references');
+  assert.equal(kling.metadata.generate_audio, false, '显式 false 必须保留');
+  const sd = JSON.parse(buildCreateBody('seedance-2.5-vip-720p', draft({ intent: 'refs', seconds: 5, switches: { generate_audio: false } }), [img()], []));
+  assert.equal(sd.metadata.generate_audio, false, '显式 false 必须保留');
 });
 
 test('不支持的开关不发送（H3/SD特殊）', () => {
@@ -104,7 +110,8 @@ test('@引用稳定绑定：删前图后 @图片1 不失联到别的素材', () 
 
 test('数量/规则校验与问题连线阻断', () => {
   assert.match(validateDraft('minimax-h3-768p-per-second', draft({ intent: 'refs' }), [aud()], []), /音频参考需要同时/);
-  assert.match(validateDraft('wan-3.0', draft({ seconds: 4 }), [], []), /5–30/);
+  assert.match(validateDraft('wan-3.0', draft({ seconds: 3 }), [], []), /4–30/);
+  assert.match(validateDraft('wan-3.0-480p', draft({ seconds: 4 }), [], []), /5–30/);
   assert.match(validateDraft('minimax-h3-768p-per-second', draft({ ratio: '21:9' }), [], []), /比例/);
   assert.match(validateDraft('seedance-2.5-vip-720p', draft({ intent: 'frames' }), [img()], [img(), img()]), /不应连接普通素材/);
   assert.match(validateDraft('seedance-2.5-vip-720p', draft(), [], [], ['上游生成节点尚无可用成片']), /连线来源未就绪/);
